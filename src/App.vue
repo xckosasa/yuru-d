@@ -14,7 +14,7 @@
       <section class="card summary-card">
         <div v-if="latest" class="summary-grid">
           <div class="big-number">
-            <div class="label">{{ settings.privateMode ? '初日から' : '最新体重' }}</div>
+            <div class="label">{{ settings.privateMode ? '初日から' : 'NOW!!' }}</div>
             <div class="value">
               {{ settings.privateMode ? firstDayDiffText : formatWeight(latest.weight) }}
               <span v-if="!settings.privateMode">kg</span>
@@ -77,8 +77,11 @@
 
       <section class="card graph-card">
         <h2 class="card-title">体重推移</h2>
-        <div class="placeholder">
-          <p>記録が増えると、ここに体重の変化が表示されます。</p>
+        <div v-if="records.length >= 2">
+          <WeightChart :records="records" />
+        </div>
+        <div v-else class="placeholder">
+          <p>記録が2件以上でグラフを表示します。</p>
         </div>
       </section>
 
@@ -193,6 +196,7 @@ import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
 import logo from './assets/img/logo.svg'
 import gear from './assets/img/gear.svg'
+import WeightChart from './components/WeightChart.vue'
 
 const LS_SETTINGS = 'yurutto-settings'
 const LS_RECORDS = 'yurutto-records'

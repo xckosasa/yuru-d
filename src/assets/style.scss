@@ -4,7 +4,7 @@
   --card: #ffffff;
   --primary: #70EBB8; /* mint */
   --accent: #ffd8b5; /* peach */
-  --text: #333333;
+  --text: #121212;
   --muted: #777777;
 }
 * {
@@ -87,14 +87,32 @@ body {
   flex: 1;
 }
 .big-number .value {
-  font-size: 22px;
+  font-size: 36px;
   font-weight: 700;
+  color: var(--text);
+  >span{
+    font-size:14px;
+    color:#666;
+  }
+}
+.big-number .label {
+  font-size: 13px;
+  color: #000;
+  background: var(--primary);
+  display:inline-flex;
+  padding: 4px 8px;
+  line-height:1;
+  border-radius: 12px;
+  font-weight:bold;
 }
 .small-metrics {
-  width: 150px;
+  width: 200px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 1px solid #e6efe9;
+
 }
 .metric .label {
   font-size: 12px;
@@ -102,6 +120,7 @@ body {
 }
 .metric .value {
   font-weight: 600;
+  font-size: 14px;
 }
 .empty,
 .empty-small {
