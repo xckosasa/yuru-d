@@ -1,35 +1,35 @@
 
 <template>
   <div class="weight-chart">
-    <svg viewBox="0 0 600 200" preserveAspectRatio="none" class="chart-svg" role="img" aria-label="体重推移グラフ">
+    <svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
       <!-- horizontal grid -->
       <g class="grid" stroke="#e6e6e6" stroke-width="1">
         <line v-for="(y, i) in gridYs" :key="i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
       </g>
 
       <!-- goal line -->
-      <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.5" stroke-dasharray="6 4" />
-      <text v-if="hasGoal" :x="W-P-6" :y="goalY - 8" font-size="11" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
+      <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
+      <text v-if="hasGoal" :x="W-P-8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- area under curve -->
       <polygon v-if="areaPoints" :points="areaPoints" fill="var(--primary, #70EBB8)" fill-opacity="0.12" />
 
       <!-- polyline -->
-      <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+      <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
 
       <!-- points -->
       <g v-for="(p, i) in points" :key="i">
-        <circle :cx="p.x" :cy="p.y" r="4" :fill="(i === points.length - 1) ? 'var(--accent, #2b9)':'#fff'" stroke="var(--primary, #70EBB8)" stroke-width="2" />
+        <circle :cx="p.x" :cy="p.y" r="5" :fill="(i === points.length - 1) ? 'var(--accent, #2b9)':'#fff'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
       </g>
 
       <!-- y labels -->
-      <g class="ylabels" fill="#666" font-size="11">
-        <text v-for="(t, i) in ticks" :key="'y'+i" :x="12" :y="t.y+4">{{ t.v }}kg</text>
+      <g class="ylabels" fill="#333" font-size="13">
+        <text v-for="(t, i) in ticks" :key="'y'+i" :x="10" :y="t.y+5">{{ t.v }}kg</text>
       </g>
 
       <!-- x labels -->
-      <g class="xlabels" fill="#666" font-size="10">
-        <text v-for="(p, i) in labelPoints" :key="'l'+i" :x="p.x" y="195" text-anchor="middle">{{ p.label }}</text>
+      <g class="xlabels" fill="#666" font-size="12">
+        <text v-for="(p, i) in labelPoints" :key="'l'+i" :x="p.x" :y="225" text-anchor="middle">{{ p.label }}</text>
       </g>
     </svg>
   </div>
@@ -43,8 +43,8 @@ const props = defineProps({ records: { type: Array, required: true }, goal: { ty
 const scale = computed(() => {
   const recs = (props.records || []).slice().reverse()
   const W = 600
-  const H = 200
-  const P = 36
+  const H = 260
+  const P = 40
   const innerW = W - P * 2
   const innerH = H - P * 2
 
