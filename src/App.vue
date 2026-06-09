@@ -48,31 +48,55 @@
       <section :class="['card','form-card', { flash: saved }]">
         <h2 class="card-title">今日の記録</h2>
         <form @submit.prevent="saveRecord">
-          <label>
+          <div class="date-summary">
+            <div>
+              <div class="label">記録日</div>
+              <div class="date-current">{{ selectedDateLabel }}</div>
+            </div>
+            <button class="btn-text compact" type="button" @click="showDateInput = !showDateInput">
+              {{ showDateInput ? '閉じる' : '日付を変更' }}
+            </button>
+          </div>
+
+          <label v-if="showDateInput">
             日付
             <input type="date" v-model="form.date" />
           </label>
 
           <label>
             体重 (kg)
-            <input type="number" step="0.1" v-model.number="form.weight" placeholder="例: 64.2" />
+            <input type="number" step="0.1" v-model.number="form.weight" :placeholder="weightPlaceholder" />
           </label>
 
-          <label>
-            体脂肪率 (%) <span class="hint">任意</span>
-            <input type="number" step="0.1" v-model.number="form.fat" placeholder="例: 18.5" />
-          </label>
+          <button class="btn-text optional-toggle" type="button" @click="showOptionalFields = !showOptionalFields">
+            {{ showOptionalFields ? '体脂肪率・メモを閉じる' : '体脂肪率・メモも入力する' }}
+          </button>
 
-          <label>
-            メモ
-            <input type="text" v-model="form.note" placeholder="今日は調子が良い" />
-          </label>
+          <div v-if="showOptionalFields" class="optional-fields">
+            <label>
+              体脂肪率 (%) <span class="hint">任意</span>
+              <input type="number" step="0.1" v-model.number="form.fat" placeholder="例: 18.5" />
+            </label>
+
+            <label>
+              メモ
+              <input type="text" v-model="form.note" placeholder="今日は調子が良い" />
+            </label>
+          </div>
 
           <div class="error" v-if="error">{{ error }}</div>
 
-          <button class="btn-primary lg" type="submit">保存する</button>
+          <button class="btn-primary lg" type="submit">{{ saveButtonText }}</button>
           <span class="saved" v-if="saved">記録しました</span>
         </form>
+      </section>
+
+      <section v-if="showInstallPrompt" class="card install-card">
+        <div>
+          <h2 class="card-title">ホーム画面に追加</h2>
+          <p>すぐ記録できるように、アプリとして追加できます。</p>
+        </div>
+        <button class="btn-primary" type="button" @click="installPWA">追加する</button>
       </section>
 
       <section class="card graph-card">
@@ -218,10 +242,29 @@ const settingsError = ref('')
 const settingsSaved = ref(false)
 const showSettingsModal = ref(false)
 const showEditModal = ref(false)
+const showDateInput = ref(false)
+const showOptionalFields = ref(false)
 const lastSavedDate = ref(null)
 const editingRecord = ref(null)
+const deferredInstallPrompt = ref(null)
+const appInstalled = ref(false)
 
 let notificationTimer = null
+
+function getTodayDateString() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function formatDateLabel(dateString) {
+  if (!dateString) return '今日'
+  const [year, month, day] = dateString.split('-')
+  if (!year || !month || !day) return dateString
+  return `${Number(month)}月${Number(day)}日`
+}
 
 function clearNotificationTimer() {
   if (notificationTimer) {
@@ -402,6 +445,18 @@ function saveRecord() {
 
   saved.value = true
   setTimeout(() => (saved.value = false), 1400)
+  resetFormAfterSave()
+}
+
+function resetFormAfterSave() {
+  form.value = {
+    date: getTodayDateString(),
+    weight: null,
+    fat: null,
+    note: ''
+  }
+  showDateInput.value = false
+  showOptionalFields.value = false
 }
 
 function saveEditedRecord() {
@@ -453,14 +508,31 @@ function formatWeight(v) {
   return hwFormatWeight(v)
 }
 
+async function installPWA() {
+  if (!deferredInstallPrompt.value) return
+  deferredInstallPrompt.value.prompt()
+  await deferredInstallPrompt.value.userChoice
+  deferredInstallPrompt.value = null
+}
+
 onMounted(() => {
   // load settings and records from storage utils
   Object.assign(settings.value, loadSettingsFromLS())
   loadRecords()
   // initialize form date to today
-  form.value.date = new Date().toISOString().slice(0, 10)
+  form.value.date = getTodayDateString()
   applyDarkMode()
   requestNotificationPermission()
+
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault()
+    deferredInstallPrompt.value = event
+  })
+
+  window.addEventListener('appinstalled', () => {
+    appInstalled.value = true
+    deferredInstallPrompt.value = null
+  })
 })
 
 watch(
@@ -481,6 +553,22 @@ watch(
 
 const latest = computed(() => (records.value.length ? records.value[0] : null))
 const firstRecord = computed(() => (records.value.length ? records.value[records.value.length - 1] : null))
+const todayDate = computed(() => getTodayDateString())
+const selectedDateLabel = computed(() => {
+  const suffix = form.value.date === todayDate.value ? '今日' : '選択中'
+  return `${formatDateLabel(form.value.date)} (${suffix})`
+})
+const existingFormRecord = computed(() => records.value.find(record => record.date === form.value.date))
+const weightPlaceholder = computed(() => {
+  if (!latest.value) return '例: 64.2'
+  return `前回 ${formatWeight(latest.value.weight)}`
+})
+const saveButtonText = computed(() => {
+  if (existingFormRecord.value && form.value.date === todayDate.value) return '今日の記録を更新'
+  if (existingFormRecord.value) return 'この日の記録を更新'
+  return '保存する'
+})
+const showInstallPrompt = computed(() => deferredInstallPrompt.value && !appInstalled.value)
 
 const firstDayDiffText = computed(() => {
   if (!latest.value || !firstRecord.value) return '—'
@@ -519,4 +607,3 @@ const recordsComputed = records
 
 // helpers used in template
 </script>
-
