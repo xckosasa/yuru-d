@@ -3,7 +3,7 @@
   --bg1: #f7fbf9;
   --card: #ffffff;
   --primary: #70EBB8; /* mint */
-  --accent: #ffd8b5; /* peach */
+  --accent: #fc561f; /* peach */
   --text: #121212;
   --muted: #777777;
   
@@ -15,6 +15,24 @@
   --chart-x-label: #666; /* date labels */
   --chart-goal: #ff6b6b; /* goal line */
   --chart-point-bg: #fff; /* data point fill */
+}
+
+:root.dark-mode {
+  --bg1: #121212;
+  --card: #1e1e1e;
+  --primary: #70EBB8; /* mint */
+  --accent: #fc561f; /* peach */
+  --text: #f5f5f5;
+  --muted: #aaaaaa;
+  
+  /* chart colors (dark mode) */
+  --chart-grid: #444; /* main grid lines */
+  --chart-grid-half: #333; /* 0.5kg dotted lines */
+  --chart-axis: rgba(255, 255, 255, 0.2); /* axis lines */
+  --chart-point-label: #ccc; /* weight values on points */
+  --chart-x-label: #999; /* date labels */
+  --chart-goal: #ff6b6b; /* goal line */
+  --chart-point-bg: #1e1e1e; /* data point fill */
 }
 * {
   box-sizing: border-box;

@@ -122,6 +122,12 @@
             <span class="toggle-label">体重を非公開にする</span>
           </label>
 
+          <label class="toggle-switch">
+            <input type="checkbox" v-model="settings.darkMode" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">ダークモード</span>
+          </label>
+
           <label>
             身長 (cm)
             <input type="number" v-model.number="settings.height" min="1" />
@@ -201,7 +207,7 @@ import WeightChart from './components/WeightChart.vue'
 const LS_SETTINGS = 'yurutto-settings'
 const LS_RECORDS = 'yurutto-records'
 
-const settings = ref({ height: null, goal: null, time: '', privateMode: false })
+const settings = ref({ height: null, goal: null, time: '', privateMode: false, darkMode: false })
 const records = ref([])
 
 const form = ref({ date: '', weight: null, fat: null, note: '' })
@@ -283,6 +289,14 @@ function requestNotificationPermission() {
   }
 }
 
+function applyDarkMode() {
+  if (settings.value.darkMode) {
+    document.documentElement.classList.add('dark-mode')
+  } else {
+    document.documentElement.classList.remove('dark-mode')
+  }
+}
+
 function saveSettings() {
   settingsError.value = ''
   if (!settings.value.height || settings.value.height < 1) {
@@ -297,6 +311,7 @@ function saveSettings() {
 
 function handleSettingsSave() {
   saveSettings()
+  applyDarkMode()
   if (!settingsError.value) {
     showSettingsModal.value = false
   }
@@ -304,10 +319,11 @@ function handleSettingsSave() {
 
 function resetSettings() {
   if (!confirm('設定をリセットしますか？')) return
-  settings.value = { height: null, goal: null, time: '', privateMode: false }
+  settings.value = { height: null, goal: null, time: '', privateMode: false, darkMode: false }
   saveSettingsToLS(settings.value)
   settingsError.value = ''
   settingsSaved.value = true
+  applyDarkMode()
   setTimeout(() => (settingsSaved.value = false), 1500)
 }
 
@@ -443,6 +459,7 @@ onMounted(() => {
   loadRecords()
   // initialize form date to today
   form.value.date = new Date().toISOString().slice(0, 10)
+  applyDarkMode()
   requestNotificationPermission()
 })
 
@@ -452,6 +469,13 @@ watch(
     if (Notification.permission === 'granted') {
       scheduleNotification()
     }
+  }
+)
+
+watch(
+  () => settings.value.darkMode,
+  () => {
+    applyDarkMode()
   }
 )
 
