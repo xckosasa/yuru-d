@@ -2,7 +2,7 @@
 :root {
   --bg1: #f7fbf9;
   --card: #ffffff;
-  --primary: #6fc2a6; /* mint */
+  --primary: #70EBB8; /* mint */
   --accent: #ffd8b5; /* peach */
   --text: #333333;
   --muted: #777777;
@@ -27,7 +27,7 @@ body {
     sans-serif;
   margin: 0;
   color: var(--text);
-  background: linear-gradient(180deg, var(--bg1), #f3faf8);
+  background: var(--primary);
 }
 .app-shell {
   display: flex;
@@ -37,7 +37,7 @@ body {
 .app {
   width: 100%;
   max-width: 420px;
-  background: #70EBB8!important;
+  background: var(--primary) !important;
 }
 .header-card {
   margin-bottom: 12px;
@@ -125,7 +125,7 @@ input[type="time"] {
   padding: 12px;
   border-radius: 10px;
   border: 1px solid #e6efe9;
-  font-size: 15px;
+  font-size: 16px;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -183,7 +183,6 @@ input[type="time"] {
   display: inline-block;
   padding: 10px 14px;
   background: var(--primary);
-  color: white;
   border: none;
   border-radius: 10px;
   &.lg {
@@ -351,8 +350,8 @@ input[type="time"] {
 @media (min-width: 700px) {
   .app-shell {
     padding: 40px;
-    background: linear-gradient(180deg, var(--bg1), #eef8f6);
     min-height: 100vh;
+    background: var(--primary) !important;
   }
   .app {
     box-shadow: 0 8px 30px rgba(10, 30, 20, 0.06);

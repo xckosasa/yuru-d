@@ -188,7 +188,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
 import logo from './assets/img/logo.svg'
@@ -211,6 +211,74 @@ const showEditModal = ref(false)
 const lastSavedDate = ref(null)
 const editingRecord = ref(null)
 
+let notificationTimer = null
+
+function clearNotificationTimer() {
+  if (notificationTimer) {
+    clearTimeout(notificationTimer)
+    notificationTimer = null
+  }
+}
+
+function getNextNotificationDelay() {
+  if (!settings.value.time) return null
+  const [hours, minutes] = settings.value.time.split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null
+
+  const now = new Date()
+  const target = new Date(now)
+  target.setHours(hours, minutes, 0, 0)
+  if (target <= now) {
+    target.setDate(target.getDate() + 1)
+  }
+
+  return target.getTime() - now.getTime()
+}
+
+function showReminderNotification() {
+  const title = 'ゆるっと体重ログ'
+  const body = settings.value.time
+    ? `今日は ${settings.value.time} に記録を忘れずに！`
+    : '今日の体重記録を忘れずに。'
+
+  if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.showNotification(title, {
+        body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png'
+      })
+    })
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/icons/icon-192.png' })
+  }
+}
+
+function scheduleNotification() {
+  clearNotificationTimer()
+  if (!settings.value.time || Notification.permission !== 'granted') return
+  const delay = getNextNotificationDelay()
+  if (delay === null) return
+
+  notificationTimer = setTimeout(() => {
+    showReminderNotification()
+    scheduleNotification()
+  }, delay)
+}
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        scheduleNotification()
+      }
+    })
+  } else if (Notification.permission === 'granted') {
+    scheduleNotification()
+  }
+}
+
 function saveSettings() {
   settingsError.value = ''
   if (!settings.value.height || settings.value.height < 1) {
@@ -220,6 +288,7 @@ function saveSettings() {
   saveSettingsToLS(settings.value)
   settingsSaved.value = true
   setTimeout(() => (settingsSaved.value = false), 1500)
+  requestNotificationPermission()
 }
 
 function handleSettingsSave() {
@@ -370,7 +439,17 @@ onMounted(() => {
   loadRecords()
   // initialize form date to today
   form.value.date = new Date().toISOString().slice(0, 10)
+  requestNotificationPermission()
 })
+
+watch(
+  () => settings.value.time,
+  () => {
+    if (Notification.permission === 'granted') {
+      scheduleNotification()
+    }
+  }
+)
 
 const latest = computed(() => (records.value.length ? records.value[0] : null))
 const firstRecord = computed(() => (records.value.length ? records.value[records.value.length - 1] : null))
