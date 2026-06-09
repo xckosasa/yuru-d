@@ -18,7 +18,7 @@
 
       <!-- goal line -->
       <line v-if="hasGoal" :x1="scale.P" :x2="scale.W - scale.P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
-      <text v-if="hasGoal" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
+      <text v-if="hasGoal" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="18" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- half-kg dotted grid -->
       <g class="half-grid" stroke="#d0d0d0" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
@@ -26,7 +26,7 @@
       </g>
 
       <!-- point labels -->
-      <g class="point-labels" fill="#333" font-size="14">
+      <g class="point-labels" fill="#333" font-size="18">
         <text v-for="(p, i) in points" :key="'pl'+i" :x="p.x" :y="p.y - 12" text-anchor="middle">{{ p.weight.toFixed(1) }}kg</text>
       </g>
 
@@ -36,11 +36,6 @@
       <!-- points -->
       <g v-for="(p, i) in points" :key="i">
         <circle :cx="p.x" :cy="p.y" r="5" :fill="(i === points.length - 1) ? 'var(--accent, #2b9)':'#fff'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
-      </g>
-
-      <!-- y labels -->
-      <g class="ylabels" fill="#222" font-size="20" text-anchor="end">
-        <text v-for="(t, i) in ticks" :key="'y'+i" :x="scale.P - 18" :y="t.y+7">{{ t.v }}kg</text>
       </g>
 
       <!-- x labels -->
