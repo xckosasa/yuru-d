@@ -3,30 +3,30 @@
   <div class="weight-chart">
     <svg viewBox="0 0 600 340" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
       <!-- horizontal grid (coarse) -->
-      <g class="grid" stroke="#b0b0b0" stroke-width="1" stroke-opacity="0.7">
+      <g class="grid" stroke="var(--chart-grid, #b0b0b0)" stroke-width="1" stroke-opacity="0.7">
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="y" :y2="y" />
       </g>
 
       <!-- vertical grid -->
-      <g class="v-grid" stroke="#b0b0b0" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7">
+      <g class="v-grid" stroke="var(--chart-grid, #b0b0b0)" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7">
         <line v-for="(p, i) in points" :key="'v'+i" :x1="p.x" :x2="p.x" :y1="scale.P" :y2="scale.H - scale.P" />
       </g>
 
       <!-- axis lines -->
-      <line :x1="scale.P" :x2="scale.P" :y1="scale.P" :y2="scale.H - scale.P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
-      <line :x1="scale.P" :x2="scale.W - scale.P" :y1="scale.H - scale.P" :y2="scale.H - scale.P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
+      <line :x1="scale.P" :x2="scale.P" :y1="scale.P" :y2="scale.H - scale.P" stroke="var(--chart-axis, rgba(0,0,0,0.2))" stroke-width="1.5" />
+      <line :x1="scale.P" :x2="scale.W - scale.P" :y1="scale.H - scale.P" :y2="scale.H - scale.P" stroke="var(--chart-axis, rgba(0,0,0,0.2))" stroke-width="1.5" />
 
       <!-- goal line -->
-      <line v-if="hasGoal" :x1="scale.P" :x2="scale.W - scale.P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
-      <text v-if="hasGoal" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="18" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
+      <line v-if="hasGoal" :x1="scale.P" :x2="scale.W - scale.P" :y1="goalY" :y2="goalY" stroke="var(--chart-goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
+      <text v-if="hasGoal" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="18" text-anchor="end" fill="var(--chart-goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- half-kg dotted grid -->
-      <g class="half-grid" stroke="#d0d0d0" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
+      <g class="half-grid" stroke="var(--chart-grid-half, #d0d0d0)" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
         <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="ln.y" :y2="ln.y" />
       </g>
 
       <!-- point labels -->
-      <g class="point-labels" fill="#333" font-size="18">
+      <g class="point-labels" fill="var(--chart-point-label, #333)" font-size="18">
         <text v-for="(p, i) in points" :key="'pl'+i" :x="p.x" :y="p.y - 12" text-anchor="middle">{{ p.weight.toFixed(1) }}kg</text>
       </g>
 
@@ -39,7 +39,7 @@
       </g>
 
       <!-- x labels -->
-      <g class="xlabels" fill="#666" font-size="20">
+      <g class="xlabels" fill="var(--chart-x-label, #666)" font-size="20">
         <text v-for="(p, i) in labelPoints" :key="'l'+i" :x="p.x" :y="xLabelY" text-anchor="middle">{{ p.label }}</text>
       </g>
     </svg>

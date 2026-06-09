@@ -6,6 +6,14 @@
   --accent: #ffd8b5; /* peach */
   --text: #121212;
   --muted: #777777;
+  
+  /* chart colors */
+  --chart-grid: #b0b0b0; /* main grid lines */
+  --chart-grid-half: #d0d0d0; /* 0.5kg dotted lines */
+  --chart-axis: rgba(0, 0, 0, 0.2); /* axis lines */
+  --chart-point-label: #333; /* weight values on points */
+  --chart-x-label: #666; /* date labels */
+  --chart-goal: #ff6b6b; /* goal line */
 }
 * {
   box-sizing: border-box;
