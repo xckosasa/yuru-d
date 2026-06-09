@@ -7,10 +7,7 @@
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
       </g>
 
-      <!-- half-kg dotted grid -->
-      <g class="half-grid" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="2 4">
-        <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
-      </g>
+      <!-- half-kg dotted grid (rendered after area to stay visible) -->
 
       <!-- goal line -->
       <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
@@ -18,6 +15,11 @@
 
       <!-- area under curve -->
       <polygon v-if="areaPoints" :points="areaPoints" fill="var(--primary, #70EBB8)" fill-opacity="0.12" />
+
+      <!-- half-kg dotted grid (draw after area so it stays visible) -->
+      <g class="half-grid" stroke="rgba(0,0,0,0.08)" stroke-width="1" stroke-dasharray="2 4">
+        <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
+      </g>
 
       <!-- polyline -->
       <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
