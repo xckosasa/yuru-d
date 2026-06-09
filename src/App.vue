@@ -232,9 +232,6 @@ import logo from './assets/img/logo.svg'
 import gear from './assets/img/gear.svg'
 import WeightChart from './components/WeightChart.vue'
 
-const LS_SETTINGS = 'yurutto-settings'
-const LS_RECORDS = 'yurutto-records'
-
 const settings = ref({ height: null, goal: null, time: '', privateMode: false, darkMode: false })
 const records = ref([])
 
@@ -293,7 +290,7 @@ function getNextNotificationDelay() {
 }
 
 function showReminderNotification() {
-  const title = 'ゆるっと体重ログ'
+  const title = 'LOGS'
   const body = settings.value.time
     ? `今日は ${settings.value.time} に記録を忘れずに！`
     : '今日の体重記録を忘れずに。'
