@@ -14,6 +14,9 @@
       <section class="card summary-card">
         <div v-if="latest" class="summary-grid">
           <div class="big-number">
+            <div class="chara">
+              <img :src="charaIcon" alt="" aria-hidden="true">
+            </div>
             <div class="label">{{ settings.privateMode ? '初日から' : 'NOW!!' }}</div>
             <div class="value">
               {{ settings.privateMode ? firstDayDiffText : formatWeight(latest.weight) }}
@@ -230,6 +233,9 @@ import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
 import logo from './assets/img/logo.svg'
 import gear from './assets/img/gear.svg'
+import iconFat from './assets/img/icon-fat.svg'
+import iconNormal from './assets/img/icon-normal.svg'
+import iconSlim from './assets/img/icon-slim.svg'
 import WeightChart from './components/WeightChart.vue'
 
 const settings = ref({ height: null, goal: null, time: '', privateMode: false, darkMode: false })
@@ -570,6 +576,12 @@ const saveButtonText = computed(() => {
   return '保存する'
 })
 const showInstallPrompt = computed(() => (import.meta.env.DEV || deferredInstallPrompt.value) && !appInstalled.value)
+const charaIcon = computed(() => {
+  if (!latest.value || !settings.value.goal) return iconNormal
+  if (latest.value.weight >= settings.value.goal + 2) return iconFat
+  if (latest.value.weight < settings.value.goal) return iconSlim
+  return iconNormal
+})
 
 const firstDayDiffText = computed(() => {
   if (!latest.value || !firstRecord.value) return '—'
