@@ -1,7 +1,7 @@
 
 <template>
   <div class="weight-chart">
-    <svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
+    <svg viewBox="0 0 600 340" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
       <!-- horizontal grid (coarse) -->
       <g class="grid" stroke="#b0b0b0" stroke-width="1" stroke-opacity="0.7">
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="y" :y2="y" />
@@ -59,8 +59,8 @@ const props = defineProps({ records: { type: Array, required: true }, goal: { ty
 const scale = computed(() => {
   const recs = (props.records || []).slice().reverse()
   const W = 600
-  const H = 260
-  const P = 96
+  const H = 340
+  const P = 40
   const innerW = W - P * 2
   const innerH = H - P * 2
 
@@ -151,13 +151,13 @@ const halfKgLines = computed(() => {
 
 const xLabelY = computed(() => {
   const s = scale.value
-  if (!s) return 245
-  return s.H - Math.floor(s.P / 2) + 20
+  if (!s) return 300
+  return s.H - 20
 })
 </script>
 
 <style scoped>
-.weight-chart { width: 100%; height: 220px; }
+.weight-chart { width: 100%; height: 320px; }
 .chart-svg { width: 100%; height: 100%; display: block; }
 .grid line { stroke: rgba(0,0,0,0.06); }
 .ylabels { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
