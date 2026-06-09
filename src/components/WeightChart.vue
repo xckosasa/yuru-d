@@ -3,22 +3,31 @@
   <div class="weight-chart">
     <svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
       <!-- horizontal grid (coarse) -->
-      <g class="grid" stroke="#e6e6e6" stroke-width="1">
+      <g class="grid" stroke="rgba(0,0,0,0.14)" stroke-width="1">
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
       </g>
 
       <!-- vertical grid -->
-      <g class="v-grid" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="2 4">
+      <g class="v-grid" stroke="rgba(0,0,0,0.14)" stroke-width="1" stroke-dasharray="2 4">
         <line v-for="(p, i) in points" :key="'v'+i" :x1="p.x" :x2="p.x" :y1="P" :y2="H-P" />
       </g>
+
+      <!-- axis lines -->
+      <line :x1="P" :x2="P" :y1="P" :y2="H-P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
+      <line :x1="P" :x2="W-P" :y1="H-P" :y2="H-P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
 
       <!-- goal line -->
       <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
       <text v-if="hasGoal" :x="W-P-8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- half-kg dotted grid -->
-      <g class="half-grid" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="2 4">
+      <g class="half-grid" stroke="rgba(0,0,0,0.14)" stroke-width="1" stroke-dasharray="2 4">
         <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
+      </g>
+
+      <!-- point labels -->
+      <g class="point-labels" fill="#333" font-size="14">
+        <text v-for="(p, i) in points" :key="'pl'+i" :x="p.x" :y="p.y - 12" text-anchor="middle">{{ p.weight.toFixed(1) }}kg</text>
       </g>
 
       <!-- polyline -->
@@ -51,7 +60,7 @@ const scale = computed(() => {
   const recs = (props.records || []).slice().reverse()
   const W = 600
   const H = 260
-  const P = 84
+  const P = 96
   const innerW = W - P * 2
   const innerH = H - P * 2
 
