@@ -293,6 +293,7 @@ input[type="time"]:disabled {
   border: none;
   border-radius: 10px;
   font-weight: 600;
+  color:var(--text);
   &.lg {
     height: 48px;
     font-size: 16px;
