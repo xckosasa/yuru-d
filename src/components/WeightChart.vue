@@ -35,7 +35,7 @@
 
       <!-- points -->
       <g v-for="(p, i) in points" :key="i">
-        <circle :cx="p.x" :cy="p.y" r="5" :fill="(i === points.length - 1) ? 'var(--accent, #2b9)':'#fff'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
+        <circle :cx="p.x" :cy="p.y" r="5" :fill="(i === points.length - 1) ? 'var(--accent, #2b9)':'var(--chart-point-bg, #fff)'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
       </g>
 
       <!-- x labels -->
