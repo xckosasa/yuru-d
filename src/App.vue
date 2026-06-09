@@ -78,7 +78,7 @@
       <section class="card graph-card">
         <h2 class="card-title">体重推移</h2>
         <div v-if="records.length >= 2">
-          <WeightChart :records="records" />
+          <WeightChart :records="records" :goal="settings.goal" />
         </div>
         <div v-else class="placeholder">
           <p>記録が2件以上でグラフを表示します。</p>
