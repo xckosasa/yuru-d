@@ -3,8 +3,8 @@
     <main class="app">
       <header class="header-card">
         <div>
-          <h1 class="title">ゆるっと体重ログ</h1>
-          <p class="subtitle">今日のからだを、やさしく記録。</p>
+          <h1 class="title" data-text="LOGS">LOGS</h1>
+          <p class="subtitle">体重だけは記録しよう。</p>
         </div>
         <div class="header-actions">
           <button class="btn-icon" type="button" @click="showSettingsModal = true"><img src="/src/assets/img/gear.svg" alt=""></button>
@@ -70,7 +70,7 @@
 
           <div class="error" v-if="error">{{ error }}</div>
 
-          <button class="btn-primary" type="submit">保存する</button>
+          <button class="btn-primary lg" type="submit">保存する</button>
           <span class="saved" v-if="saved">記録しました</span>
         </form>
       </section>
