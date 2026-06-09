@@ -1,0 +1,26 @@
+{
+  "name": "yurutto-weight-log",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/test-utils": "^2.3.0",
+    "gh-pages": "^5.0.0",
+    "sass": "^1.84.0",
+    "vite": "^4.5.14",
+    "vitest": "^0.34.3"
+  },
+  "vitest": {
+    "environment": "jsdom"
+  }
+}
