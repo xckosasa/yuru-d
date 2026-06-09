@@ -111,13 +111,18 @@ input[type="date"],
 input[type="number"],
 input[type="text"],
 input[type="time"] {
+  display: block;
+  box-sizing: border-box;
   min-width: 0;
-  max-width: 100%;
+  width: 100%;
   padding: 12px;
   border-radius: 10px;
   border: 1px solid #e6efe9;
   font-size: 15px;
-  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-clip: padding-box;
 }
 .hint {
   font-size: 12px;
