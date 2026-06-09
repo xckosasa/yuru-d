@@ -3,12 +3,12 @@
   <div class="weight-chart">
     <svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
       <!-- horizontal grid (coarse) -->
-      <g class="grid" stroke="rgba(0,0,0,0.14)" stroke-width="1">
+      <g class="grid" stroke="#b0b0b0" stroke-width="1" stroke-opacity="0.7">
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
       </g>
 
       <!-- vertical grid -->
-      <g class="v-grid" stroke="rgba(0,0,0,0.14)" stroke-width="1" stroke-dasharray="2 4">
+      <g class="v-grid" stroke="#b0b0b0" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7">
         <line v-for="(p, i) in points" :key="'v'+i" :x1="p.x" :x2="p.x" :y1="P" :y2="H-P" />
       </g>
 
@@ -21,7 +21,7 @@
       <text v-if="hasGoal" :x="W-P-8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- half-kg dotted grid -->
-      <g class="half-grid" stroke="rgba(0,0,0,0.14)" stroke-width="1" stroke-dasharray="2 4">
+      <g class="half-grid" stroke="#d0d0d0" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
         <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
       </g>
 
