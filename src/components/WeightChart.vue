@@ -4,25 +4,25 @@
     <svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
       <!-- horizontal grid (coarse) -->
       <g class="grid" stroke="#b0b0b0" stroke-width="1" stroke-opacity="0.7">
-        <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
+        <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="y" :y2="y" />
       </g>
 
       <!-- vertical grid -->
       <g class="v-grid" stroke="#b0b0b0" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7">
-        <line v-for="(p, i) in points" :key="'v'+i" :x1="p.x" :x2="p.x" :y1="P" :y2="H-P" />
+        <line v-for="(p, i) in points" :key="'v'+i" :x1="p.x" :x2="p.x" :y1="scale.P" :y2="scale.H - scale.P" />
       </g>
 
       <!-- axis lines -->
-      <line :x1="P" :x2="P" :y1="P" :y2="H-P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
-      <line :x1="P" :x2="W-P" :y1="H-P" :y2="H-P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
+      <line :x1="scale.P" :x2="scale.P" :y1="scale.P" :y2="scale.H - scale.P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
+      <line :x1="scale.P" :x2="scale.W - scale.P" :y1="scale.H - scale.P" :y2="scale.H - scale.P" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" />
 
       <!-- goal line -->
-      <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
-      <text v-if="hasGoal" :x="W-P-8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
+      <line v-if="hasGoal" :x1="scale.P" :x2="scale.W - scale.P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
+      <text v-if="hasGoal" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- half-kg dotted grid -->
       <g class="half-grid" stroke="#d0d0d0" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
-        <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
+        <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="ln.y" :y2="ln.y" />
       </g>
 
       <!-- point labels -->
@@ -40,7 +40,7 @@
 
       <!-- y labels -->
       <g class="ylabels" fill="#222" font-size="20" text-anchor="end">
-        <text v-for="(t, i) in ticks" :key="'y'+i" :x="P - 18" :y="t.y+7">{{ t.v }}kg</text>
+        <text v-for="(t, i) in ticks" :key="'y'+i" :x="scale.P - 18" :y="t.y+7">{{ t.v }}kg</text>
       </g>
 
       <!-- x labels -->
@@ -79,7 +79,7 @@ const points = computed(() => {
   const s = scale.value
   if (!s) return []
   const { recs, P, innerW, innerH, max, range } = s
-    return recs.map((r, i) => {
+  return recs.map((r, i) => {
     const t = recs.length === 1 ? 0.5 : i / (recs.length - 1)
     const x = P + t * innerW
     const y = P + ((max - r.weight) / range) * innerH
