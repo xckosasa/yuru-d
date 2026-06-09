@@ -7,7 +7,10 @@
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
       </g>
 
-      <!-- half-kg dotted grid (rendered after area to stay visible) -->
+      <!-- vertical grid -->
+      <g class="v-grid" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="2 4">
+        <line v-for="(p, i) in points" :key="'v'+i" :x1="p.x" :x2="p.x" :y1="P" :y2="H-P" />
+      </g>
 
       <!-- goal line -->
       <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
@@ -27,8 +30,8 @@
       </g>
 
       <!-- y labels -->
-      <g class="ylabels" fill="#222" font-size="20">
-        <text v-for="(t, i) in ticks" :key="'y'+i" :x="14" :y="t.y+7">{{ t.v }}kg</text>
+      <g class="ylabels" fill="#222" font-size="20" text-anchor="end">
+        <text v-for="(t, i) in ticks" :key="'y'+i" :x="P - 18" :y="t.y+7">{{ t.v }}kg</text>
       </g>
 
       <!-- x labels -->
@@ -48,7 +51,7 @@ const scale = computed(() => {
   const recs = (props.records || []).slice().reverse()
   const W = 600
   const H = 260
-  const P = 56
+  const P = 84
   const innerW = W - P * 2
   const innerH = H - P * 2
 
