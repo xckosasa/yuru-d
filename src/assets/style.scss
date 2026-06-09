@@ -281,6 +281,7 @@ input[type="time"]:disabled {
   background: var(--primary);
   border: none;
   border-radius: 10px;
+  font-weight: 600;
   &.lg {
     height: 48px;
     font-size: 16px;
@@ -328,6 +329,13 @@ input[type="time"]:disabled {
 .btn-icon {
   width: 40px;
   height: 40px;
+  &.lg{
+    width: 80px;
+    height: 80px;
+    img{
+        border-radius: 16px;
+    }
+  }
   border: none;
   display: flex;
   background: none;
@@ -429,9 +437,29 @@ input[type="time"]:disabled {
   padding: 18px;
   z-index: 10;
 }
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-fade-enter-active .modal-card,
+.modal-fade-leave-active .modal-card {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-from .modal-card,
+.modal-fade-leave-to .modal-card {
+  opacity: 0;
+  transform: translateY(6px);
+}
 .modal-card {
   width: 100%;
   max-width: 420px;
+  opacity: 1;
   background: var(--card);
   border-radius: 20px;
   padding: 20px;
@@ -453,6 +481,7 @@ input[type="time"]:disabled {
   background: #e3e3e3;
   font-size: 20px;
   color: var(--muted);
+  line-height: 1;
   cursor: pointer;
   border-radius: 999px;
   width: 36px;

@@ -96,7 +96,7 @@
           <h2 class="card-title">ホーム画面に追加</h2>
           <p>すぐ記録できるように、アプリとして追加できます。</p>
         </div>
-        <button class="btn-primary" type="button" @click="installPWA">追加する</button>
+        <button class="btn-icon lg" type="button" @click="installPWA"><img src="/icons/icon-192.png" alt="追加"></button>
       </section>
 
       <section class="card graph-card">
@@ -133,90 +133,94 @@
       </section>
     </main>
 
-    <div v-if="showSettingsModal" class="modal-backdrop" @click.self="showSettingsModal = false">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h2>設定</h2>
-          <button class="close-button" @click="showSettingsModal = false">✕</button>
-        </div>
-        <form @submit.prevent="handleSettingsSave">
-          <label class="toggle-switch">
-            <input type="checkbox" v-model="settings.privateMode" />
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label">体重を非公開にする</span>
-          </label>
-
-          <label class="toggle-switch">
-            <input type="checkbox" v-model="settings.darkMode" />
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label">ダークモード</span>
-          </label>
-
-          <label>
-            身長 (cm)
-            <input type="number" v-model.number="settings.height" min="1" />
-          </label>
-
-          <label>
-            目標体重 (kg)
-            <input type="number" v-model.number="settings.goal" min="1" step="0.1" />
-          </label>
-
-          <label>
-            通知したい時間
-            <input type="time" v-model="settings.time" />
-          </label>
-
-          <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
-
-          <div class="error" v-if="settingsError">{{ settingsError }}</div>
-
-          <div class="modal-actions">
-            <button class="btn-text" type="button" @click="resetSettings">リセット</button>
-            <button class="btn-text" type="button" @click="clearAllRecords">ログをクリア</button>
-            <button class="btn-primary" type="submit">設定を保存</button>
+    <Transition name="modal-fade">
+      <div v-if="showSettingsModal" class="modal-backdrop" @click.self="showSettingsModal = false">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h2>設定</h2>
+            <button class="close-button" @click="showSettingsModal = false">✕</button>
           </div>
-          <span class="saved" v-if="settingsSaved">保存しました</span>
-        </form>
-      </div>
-    </div>
+          <form @submit.prevent="handleSettingsSave">
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="settings.privateMode" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label">体重を非公開にする</span>
+            </label>
 
-    <div v-if="showEditModal" class="modal-backdrop" @click.self="cancelEdit()">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h2>記録を編集</h2>
-          <button class="close-button" @click="cancelEdit()">✕</button>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="settings.darkMode" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label">ダークモード</span>
+            </label>
+
+            <label>
+              身長 (cm)
+              <input type="number" v-model.number="settings.height" min="1" />
+            </label>
+
+            <label>
+              目標体重 (kg)
+              <input type="number" v-model.number="settings.goal" min="1" step="0.1" />
+            </label>
+
+            <label>
+              通知したい時間
+              <input type="time" v-model="settings.time" />
+            </label>
+
+            <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
+
+            <div class="error" v-if="settingsError">{{ settingsError }}</div>
+
+            <div class="modal-actions">
+              <button class="btn-text" type="button" @click="resetSettings">リセット</button>
+              <button class="btn-text" type="button" @click="clearAllRecords">ログをクリア</button>
+              <button class="btn-primary" type="submit">設定を保存</button>
+            </div>
+            <span class="saved" v-if="settingsSaved">保存しました</span>
+          </form>
         </div>
-        <form @submit.prevent="saveEditedRecord">
-          <label>
-            日付
-            <input type="date" v-model="editForm.date" disabled />
-          </label>
-
-          <label>
-            体重 (kg)
-            <input type="number" step="0.1" v-model.number="editForm.weight" placeholder="例: 64.2" />
-          </label>
-
-          <label>
-            体脂肪率 (%) <span class="hint">任意</span>
-            <input type="number" step="0.1" v-model.number="editForm.fat" placeholder="例: 18.5" />
-          </label>
-
-          <label>
-            メモ
-            <input type="text" v-model="editForm.note" placeholder="今日は調子が良い" />
-          </label>
-
-          <div class="error" v-if="error">{{ error }}</div>
-
-          <div class="modal-actions">
-            <button class="btn-text" type="button" @click="deleteRecord(editingRecord)" v-if="editingRecord">削除</button>
-            <button class="btn-primary" type="submit">保存</button>
-          </div>
-        </form>
       </div>
-    </div>
+    </Transition>
+
+    <Transition name="modal-fade">
+      <div v-if="showEditModal" class="modal-backdrop" @click.self="cancelEdit()">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h2>記録を編集</h2>
+            <button class="close-button" @click="cancelEdit()">✕</button>
+          </div>
+          <form @submit.prevent="saveEditedRecord">
+            <label>
+              日付
+              <input type="date" v-model="editForm.date" disabled />
+            </label>
+
+            <label>
+              体重 (kg)
+              <input type="number" step="0.1" v-model.number="editForm.weight" placeholder="例: 64.2" />
+            </label>
+
+            <label>
+              体脂肪率 (%) <span class="hint">任意</span>
+              <input type="number" step="0.1" v-model.number="editForm.fat" placeholder="例: 18.5" />
+            </label>
+
+            <label>
+              メモ
+              <input type="text" v-model="editForm.note" placeholder="今日は調子が良い" />
+            </label>
+
+            <div class="error" v-if="error">{{ error }}</div>
+
+            <div class="modal-actions">
+              <button class="btn-text" type="button" @click="deleteRecord(editingRecord)" v-if="editingRecord">削除</button>
+              <button class="btn-primary" type="submit">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -568,7 +572,7 @@ const saveButtonText = computed(() => {
   if (existingFormRecord.value) return 'この日の記録を更新'
   return '保存する'
 })
-const showInstallPrompt = computed(() => deferredInstallPrompt.value && !appInstalled.value)
+const showInstallPrompt = computed(() => (import.meta.env.DEV || deferredInstallPrompt.value) && !appInstalled.value)
 
 const firstDayDiffText = computed(() => {
   if (!latest.value || !firstRecord.value) return '—'
