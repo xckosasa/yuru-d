@@ -3,11 +3,11 @@
     <main class="app">
       <header class="header-card">
         <div>
-          <h1 class="title" data-text="LOGS">LOGS</h1>
+          <h1 class="title" data-text="LOGS"><img :src="logo" alt=""></h1>
           <p class="subtitle">体重だけは記録しよう。</p>
         </div>
         <div class="header-actions">
-          <button class="btn-icon" type="button" @click="showSettingsModal = true"><img src="/src/assets/img/gear.svg" alt=""></button>
+          <button class="btn-icon" type="button" @click="showSettingsModal = true"><img :src="gear" alt=""></button>
         </div>
       </header>
 
@@ -191,6 +191,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
+import logo from './assets/img/logo.svg'
+import gear from './assets/img/gear.svg'
 
 const LS_SETTINGS = 'yurutto-settings'
 const LS_RECORDS = 'yurutto-records'

@@ -37,6 +37,7 @@ body {
 .app {
   width: 100%;
   max-width: 420px;
+  background: #70EBB8!important;
 }
 .header-card {
   margin-bottom: 12px;
@@ -59,20 +60,11 @@ body {
   font-weight: 700;
   line-height: 1;
   letter-spacing: 1.5px;
-  color: #fff;
   z-index: 1;
-  &::before {
-    content: attr(data-text);
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    color: transparent;
-    -webkit-text-stroke: 3px #000;
-  }
 }
 .subtitle {
   margin: 6px 0 0;
-  color: var(--muted);
+  color: #000;
 }
 .card {
   background: var(--card);
