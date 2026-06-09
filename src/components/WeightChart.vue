@@ -13,11 +13,8 @@
       <line v-if="hasGoal" :x1="P" :x2="W-P" :y1="goalY" :y2="goalY" stroke="var(--goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
       <text v-if="hasGoal" :x="W-P-8" :y="goalY - 10" font-size="12" text-anchor="end" fill="var(--goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
-      <!-- area under curve -->
-      <polygon v-if="areaPoints" :points="areaPoints" fill="var(--primary, #70EBB8)" fill-opacity="0.12" />
-
-      <!-- half-kg dotted grid (draw after area so it stays visible) -->
-      <g class="half-grid" stroke="rgba(0,0,0,0.08)" stroke-width="1" stroke-dasharray="2 4">
+      <!-- half-kg dotted grid -->
+      <g class="half-grid" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="2 4">
         <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
       </g>
 
@@ -80,13 +77,6 @@ const points = computed(() => {
 })
 
 const polylinePoints = computed(() => points.value.map(p => `${p.x},${p.y}`).join(' '))
-
-const areaPoints = computed(() => {
-  if (!points.value.length) return null
-  const baseY = scale.value.P + scale.value.innerH
-  const pts = points.value.map(p => `${p.x},${p.y}`).join(' ')
-  return `${pts} ${scale.value.W - scale.value.P},${baseY} ${scale.value.P},${baseY}`
-})
 
 const labelPoints = computed(() => {
   if (!points.value.length) return []
