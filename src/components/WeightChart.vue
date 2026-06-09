@@ -2,9 +2,14 @@
 <template>
   <div class="weight-chart">
     <svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
-      <!-- horizontal grid -->
+      <!-- horizontal grid (coarse) -->
       <g class="grid" stroke="#e6e6e6" stroke-width="1">
-        <line v-for="(y, i) in gridYs" :key="i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
+        <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="P" :x2="W-P" :y1="y" :y2="y" />
+      </g>
+
+      <!-- half-kg dotted grid -->
+      <g class="half-grid" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="2 4">
+        <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="P" :x2="W-P" :y1="ln.y" :y2="ln.y" />
       </g>
 
       <!-- goal line -->
@@ -23,13 +28,13 @@
       </g>
 
       <!-- y labels -->
-      <g class="ylabels" fill="#333" font-size="13">
-        <text v-for="(t, i) in ticks" :key="'y'+i" :x="10" :y="t.y+5">{{ t.v }}kg</text>
+      <g class="ylabels" fill="#222" font-size="20">
+        <text v-for="(t, i) in ticks" :key="'y'+i" :x="14" :y="t.y+7">{{ t.v }}kg</text>
       </g>
 
       <!-- x labels -->
-      <g class="xlabels" fill="#666" font-size="12">
-        <text v-for="(p, i) in labelPoints" :key="'l'+i" :x="p.x" :y="225" text-anchor="middle">{{ p.label }}</text>
+      <g class="xlabels" fill="#666" font-size="20">
+        <text v-for="(p, i) in labelPoints" :key="'l'+i" :x="p.x" :y="xLabelY" text-anchor="middle">{{ p.label }}</text>
       </g>
     </svg>
   </div>
@@ -44,7 +49,7 @@ const scale = computed(() => {
   const recs = (props.records || []).slice().reverse()
   const W = 600
   const H = 260
-  const P = 40
+  const P = 56
   const innerW = W - P * 2
   const innerH = H - P * 2
 
@@ -63,11 +68,12 @@ const points = computed(() => {
   const s = scale.value
   if (!s) return []
   const { recs, P, innerW, innerH, max, range } = s
-  return recs.map((r, i) => {
+    return recs.map((r, i) => {
     const t = recs.length === 1 ? 0.5 : i / (recs.length - 1)
     const x = P + t * innerW
     const y = P + ((max - r.weight) / range) * innerH
-    return { x, y, label: r.date.slice(5), weight: r.weight }
+    const mmdd = r.date.slice(5).replace('-', '/')
+    return { x, y, label: mmdd, weight: r.weight }
   })
 })
 
@@ -86,6 +92,7 @@ const labelPoints = computed(() => {
   const step = Math.max(1, Math.ceil(points.value.length / maxLabels))
   return points.value.filter((_, i) => i % step === 0).map(p => ({ x: p.x, label: p.label }))
 })
+
 
 const hasGoal = computed(() => props.goal !== null && props.goal !== undefined && scale.value !== null)
 
@@ -122,6 +129,26 @@ const gridYs = computed(() => {
     ys.push(y)
   }
   return ys
+})
+
+const halfKgLines = computed(() => {
+  const s = scale.value
+  if (!s) return []
+  const step = 0.5
+  const start = Math.floor(s.min / step) * step
+  const end = Math.ceil(s.max / step) * step
+  const lines = []
+  for (let v = start; v <= end + 1e-9; v = Math.round((v + step) * 100) / 100) {
+    const y = s.P + ((s.max - v) / s.range) * s.innerH
+    lines.push({ v: Math.round(v * 10) / 10, y })
+  }
+  return lines
+})
+
+const xLabelY = computed(() => {
+  const s = scale.value
+  if (!s) return 245
+  return s.H - Math.floor(s.P / 2) + 20
 })
 </script>
 
