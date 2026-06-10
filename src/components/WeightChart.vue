@@ -27,15 +27,25 @@
 
       <!-- point labels -->
       <g class="point-labels" fill="var(--chart-point-label, #333)" font-size="18">
-        <text v-for="(p, i) in points" :key="'pl'+i" :x="p.x" :y="p.y - 12" text-anchor="middle">{{ p.labelText }}</text>
+        <g v-for="(p, i) in valueLabelPoints" :key="'pl'+i">
+          <rect
+            :x="p.x - p.labelWidth / 2"
+            :y="p.labelY - 18"
+            :width="p.labelWidth"
+            height="24"
+            rx="8"
+            class="point-label-bg"
+          />
+          <text :x="p.x" :y="p.labelY" text-anchor="middle">{{ p.labelText }}</text>
+        </g>
       </g>
 
       <!-- polyline -->
       <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
 
       <!-- points -->
-      <g v-for="(p, i) in points" :key="i">
-        <circle :cx="p.x" :cy="p.y" r="5" :fill="(i === points.length - 1) ? 'var(--accent, #2b9)':'var(--chart-point-bg, #fff)'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
+      <g v-for="(p, i) in visiblePointMarkers" :key="i">
+        <circle :cx="p.x" :cy="p.y" r="5" :fill="p.isLatest ? 'var(--accent, #2b9)':'var(--chart-point-bg, #fff)'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
       </g>
 
       <!-- x labels -->
@@ -52,7 +62,8 @@ import { computed } from 'vue'
 const props = defineProps({
   records: { type: Array, required: true },
   goal: { type: Number, default: null },
-  privateMode: { type: Boolean, default: false }
+  privateMode: { type: Boolean, default: false },
+  rangeKey: { type: String, default: '1m' }
 })
 
 function formatSignedKg(value) {
@@ -96,11 +107,17 @@ const points = computed(() => {
     const y = P + ((max - value) / range) * innerH
     const mmdd = r.date.slice(5).replace('-', '/')
     const labelText = props.privateMode ? formatSignedKg(value) : `${r.weight.toFixed(1)}kg`
-    return { x, y, label: mmdd, weight: r.weight, value, labelText }
+    return { x, y, label: mmdd, weight: r.weight, value, labelText, index: i, isLatest: i === recs.length - 1 }
   })
 })
 
 const polylinePoints = computed(() => points.value.map(p => `${p.x},${p.y}`).join(' '))
+
+const visiblePointMarkers = computed(() => {
+  const list = points.value
+  if (props.rangeKey === '1w' || list.length <= 2) return list
+  return list.filter((_, index) => index === 0 || index === list.length - 1)
+})
 
 const labelPoints = computed(() => {
   if (!points.value.length) return []
@@ -109,6 +126,38 @@ const labelPoints = computed(() => {
   return points.value.filter((_, i) => i % step === 0).map(p => ({ x: p.x, label: p.label }))
 })
 
+const valueLabelPoints = computed(() => {
+  const list = points.value
+  if (!list.length) return []
+  if (list.length <= 8) {
+    return list.map(withLabelLayout)
+  }
+
+  const firstIndex = 0
+  const latestIndex = list.length - 1
+  const minIndex = list.reduce((min, point, index) => point.value < list[min].value ? index : min, 0)
+  const maxIndex = list.reduce((max, point, index) => point.value > list[max].value ? index : max, 0)
+  const preferredIndexes = [latestIndex, minIndex, maxIndex, firstIndex]
+  const selected = []
+  const minGap = list.length >= 20 ? 96 : 72
+
+  preferredIndexes.forEach(index => {
+    const point = list[index]
+    if (!point) return
+    const isTooClose = selected.some(selectedPoint => Math.abs(selectedPoint.x - point.x) < minGap)
+    if (!isTooClose) selected.push(point)
+  })
+
+  return selected
+    .sort((a, b) => a.x - b.x)
+    .map(withLabelLayout)
+})
+
+function withLabelLayout(point) {
+  const labelWidth = point.labelText.length * 9 + 14
+  const labelY = Math.max(26, point.y - 12)
+  return { ...point, labelWidth, labelY }
+}
 
 const hasGoal = computed(() => props.goal !== null && props.goal !== undefined && scale.value !== null)
 
@@ -173,4 +222,10 @@ const xLabelY = computed(() => {
 .chart-svg { width: 100%; height: 100%; display: block; }
 .grid line { stroke: rgba(0,0,0,0.06); }
 .ylabels { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+.point-label-bg {
+  fill: var(--card, #fff);
+  stroke: var(--border, rgba(0, 0, 0, 0.12));
+  stroke-width: 1;
+  opacity: 0.92;
+}
 </style>

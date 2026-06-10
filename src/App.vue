@@ -102,7 +102,48 @@
       <section v-if="activeView === 'trend'" class="card graph-card">
         <h2 class="card-title">TREND</h2>
         <div v-if="records.length >= 2">
-          <WeightChart :records="records" :goal="settings.goal" :private-mode="settings.privateMode" />
+          <div class="range-tabs" aria-label="グラフ表示期間">
+            <button
+              v-for="range in trendRanges"
+              :key="range.key"
+              :class="{ active: selectedTrendRange === range.key }"
+              type="button"
+              :disabled="selectedTrendRange === range.key"
+              @click="selectedTrendRange = range.key"
+            >
+              {{ range.label }}
+            </button>
+          </div>
+
+          <div class="trend-summary">
+            <div>
+              <span>CHANGE</span>
+              <strong>{{ trendSummary.change }}</strong>
+            </div>
+            <div>
+              <span>COUNT</span>
+              <strong>{{ trendSummary.count }}</strong>
+            </div>
+            <div v-if="!settings.privateMode">
+              <span>AVG</span>
+              <strong>{{ trendSummary.average }}</strong>
+            </div>
+            <div v-if="!settings.privateMode">
+              <span>LOW</span>
+              <strong>{{ trendSummary.low }}</strong>
+            </div>
+          </div>
+
+          <WeightChart
+            v-if="filteredTrendRecords.length >= 2"
+            :records="filteredTrendRecords"
+            :goal="settings.goal"
+            :private-mode="settings.privateMode"
+            :range-key="selectedTrendRange"
+          />
+          <div v-else class="placeholder">
+            <p>この期間の記録が2件以上でグラフを表示します。</p>
+          </div>
         </div>
         <div v-else class="placeholder">
           <p>記録が2件以上でグラフを表示します。</p>
@@ -111,9 +152,15 @@
 
       <section v-if="activeView === 'history'" class="card list-card">
         <h2 class="card-title">HISTORY</h2>
+        <div v-if="records.length > 0" class="history-month-nav">
+          <button class="btn-text compact" type="button" :disabled="!canGoOlderHistoryMonth" @click="goOlderHistoryMonth">BACK</button>
+          <div class="history-month-label">{{ selectedHistoryMonthLabel }}</div>
+          <button class="btn-text compact" type="button" :disabled="!canGoNewerHistoryMonth" @click="goNewerHistoryMonth">NEXT</button>
+        </div>
         <div v-if="records.length === 0" class="empty-small">まだ記録がありません。</div>
+        <div v-else-if="filteredHistoryRecords.length === 0" class="empty-small">この月の記録はありません。</div>
         <ul class="record-list">
-          <li v-for="(r, i) in records" :key="r.date" :class="['record-item', { 'new-record': r.date === lastSavedDate }]">
+          <li v-for="r in filteredHistoryRecords" :key="r.date" :class="['record-item', { 'new-record': r.date === lastSavedDate }]">
            <div class="record-info">
               <div class="row">
               <div class="date">{{ r.date }}</div>
@@ -123,7 +170,7 @@
               <div class="fat">体脂肪: {{ r.fat !== null ? r.fat + '%' : '—' }}</div>
               <div class="note">{{ r.note || '—' }}</div>
             </div>
-            <div class="record-diff" v-if="recordDiff(i)">前回から {{ recordDiff(i) }}</div>
+            <div class="record-diff" v-if="recordDiff(r)">前回から {{ recordDiff(r) }}</div>
            </div>
             <div class="record-actions">
               <button class="btn-text" type="button" @click="editRecord(r)">編集</button>
@@ -267,6 +314,8 @@ const settingsError = ref('')
 const settingsSaved = ref(false)
 const notificationPermission = ref('unsupported')
 const activeView = ref('home')
+const selectedTrendRange = ref('1m')
+const selectedHistoryMonth = ref('')
 const showDateInput = ref(false)
 const showOptionalFields = ref(false)
 const lastSavedDate = ref(null)
@@ -289,6 +338,18 @@ function formatDateLabel(dateString) {
   const [year, month, day] = dateString.split('-')
   if (!year || !month || !day) return dateString
   return `${Number(month)}月${Number(day)}日`
+}
+
+function parseDateString(dateString) {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function formatMonthLabel(monthString) {
+  if (!monthString) return '—'
+  const [year, month] = monthString.split('-')
+  if (!year || !month) return monthString
+  return `${year}.${month}`
 }
 
 function clearNotificationTimer() {
@@ -533,7 +594,8 @@ function saveEditedRecord() {
   cancelEdit()
 }
 
-function recordDiff(index) {
+function recordDiff(record) {
+  const index = records.value.findIndex(item => item.date === record.date)
   const current = records.value[index]
   const previous = records.value[index + 1]
   if (!current || !previous) return null
@@ -544,6 +606,18 @@ function recordDiff(index) {
 
 function formatWeight(v) {
   return hwFormatWeight(v)
+}
+
+function goOlderHistoryMonth() {
+  const currentIndex = historyMonthIndex.value
+  if (currentIndex < 0 || currentIndex >= historyMonths.value.length - 1) return
+  selectedHistoryMonth.value = historyMonths.value[currentIndex + 1]
+}
+
+function goNewerHistoryMonth() {
+  const currentIndex = historyMonthIndex.value
+  if (currentIndex <= 0) return
+  selectedHistoryMonth.value = historyMonths.value[currentIndex - 1]
 }
 
 async function installPWA() {
@@ -613,6 +687,74 @@ const saveButtonText = computed(() => {
   return '保存する'
 })
 const showInstallPrompt = computed(() => (import.meta.env.DEV || deferredInstallPrompt.value) && !appInstalled.value)
+const historyMonths = computed(() => {
+  const months = []
+  records.value.forEach(record => {
+    const month = record.date.slice(0, 7)
+    if (month && !months.includes(month)) months.push(month)
+  })
+  return months
+})
+const activeHistoryMonth = computed(() => {
+  if (selectedHistoryMonth.value && historyMonths.value.includes(selectedHistoryMonth.value)) {
+    return selectedHistoryMonth.value
+  }
+  return historyMonths.value[0] || ''
+})
+const historyMonthIndex = computed(() => historyMonths.value.indexOf(activeHistoryMonth.value))
+const canGoOlderHistoryMonth = computed(() => historyMonthIndex.value >= 0 && historyMonthIndex.value < historyMonths.value.length - 1)
+const canGoNewerHistoryMonth = computed(() => historyMonthIndex.value > 0)
+const selectedHistoryMonthLabel = computed(() => formatMonthLabel(activeHistoryMonth.value))
+const filteredHistoryRecords = computed(() => {
+  if (!activeHistoryMonth.value) return []
+  return records.value.filter(record => record.date.startsWith(activeHistoryMonth.value))
+})
+const trendRanges = [
+  { key: '1w', label: '1W', days: 7 },
+  { key: '1m', label: '1M', days: 30 },
+  { key: '3m', label: '3M', days: 90 },
+  { key: '6m', label: '6M', days: 180 },
+  { key: '1y', label: '1Y', days: 365 },
+  { key: 'all', label: 'ALL', days: null }
+]
+const filteredTrendRecords = computed(() => {
+  const selected = trendRanges.find(range => range.key === selectedTrendRange.value)
+  if (!selected || selected.days === null) return records.value
+
+  const latestRecord = latest.value
+  if (!latestRecord) return []
+
+  const latestDate = parseDateString(latestRecord.date)
+  const cutoff = new Date(latestDate)
+  cutoff.setDate(latestDate.getDate() - selected.days + 1)
+
+  return records.value.filter(record => parseDateString(record.date) >= cutoff)
+})
+const trendSummary = computed(() => {
+  const list = filteredTrendRecords.value
+  if (list.length < 2) {
+    return {
+      change: '—',
+      count: `${list.length}件`,
+      average: '—',
+      low: '—'
+    }
+  }
+
+  const newest = list[0]
+  const oldest = list[list.length - 1]
+  const diff = newest.weight - oldest.weight
+  const sign = diff > 0 ? '+' : ''
+  const average = list.reduce((sum, record) => sum + record.weight, 0) / list.length
+  const low = Math.min(...list.map(record => record.weight))
+
+  return {
+    change: `${sign}${diff.toFixed(1)}kg`,
+    count: `${list.length}件`,
+    average: `${formatWeight(average)}kg`,
+    low: `${formatWeight(low)}kg`
+  }
+})
 const canRequestNotificationPermission = computed(() => notificationPermission.value === 'default')
 const notificationStatusText = computed(() => {
   if (notificationPermission.value === 'granted') return '許可済み'
