@@ -87,7 +87,6 @@
           <div class="error" v-if="error">{{ error }}</div>
 
           <button class="btn-primary lg" type="submit">{{ saveButtonText }}</button>
-          <span class="saved" v-if="saved">記録しました</span>
         </form>
       </section>
 
@@ -225,6 +224,32 @@
           </div>
           <div class="note-text" v-if="notificationHelpText">{{ notificationHelpText }}</div>
 
+          <div class="backup-box">
+            <div>
+              <div class="backup-title">BACKUP</div>
+              <div class="note-text">記録と設定をJSONで保存・復元できます。</div>
+            </div>
+            <div class="backup-actions">
+              <button class="btn-text compact" type="button" @click="exportBackup">EXPORT</button>
+              <button class="btn-text compact" type="button" @click="openImportFile">IMPORT</button>
+            </div>
+            <input
+              ref="importFileInput"
+              class="visually-hidden"
+              type="file"
+              accept="application/json,.json"
+              @change="importBackup"
+            />
+          </div>
+
+          <div class="privacy-box">
+            <div>
+              <div class="privacy-title">PRIVACY</div>
+              <div class="note-text">記録は端末内に保存され、外部サーバーへ送信されません。</div>
+            </div>
+            <a class="btn-text compact privacy-link" href="/privacy.html" target="_blank" rel="noopener">POLICY</a>
+          </div>
+
           <div class="error" v-if="settingsError">{{ settingsError }}</div>
 
           <div class="page-actions">
@@ -232,7 +257,6 @@
             <button class="btn-text" type="button" @click="clearAllRecords">ログをクリア</button>
             <button class="btn-primary" type="submit">設定を保存</button>
           </div>
-          <span class="saved" v-if="settingsSaved">保存しました</span>
         </form>
       </section>
 
@@ -286,6 +310,12 @@
         <span class="nav-icon" :style="{ '--icon': `url(${iconSetting})` }" aria-hidden="true"></span>
       </button>
     </nav>
+
+    <Transition name="toast-fade">
+      <div v-if="toastMessage" class="toast" role="status" aria-live="polite">
+        {{ toastMessage }}
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -312,6 +342,7 @@ const error = ref('')
 const saved = ref(false)
 const settingsError = ref('')
 const settingsSaved = ref(false)
+const toastMessage = ref('')
 const notificationPermission = ref('unsupported')
 const activeView = ref('home')
 const selectedTrendRange = ref('1m')
@@ -322,8 +353,10 @@ const lastSavedDate = ref(null)
 const editingRecord = ref(null)
 const deferredInstallPrompt = ref(null)
 const appInstalled = ref(false)
+const importFileInput = ref(null)
 
 let notificationTimer = null
+let toastTimer = null
 
 function getTodayDateString() {
   const now = new Date()
@@ -350,6 +383,19 @@ function formatMonthLabel(monthString) {
   const [year, month] = monthString.split('-')
   if (!year || !month) return monthString
   return `${year}.${month}`
+}
+
+function getDefaultSettings() {
+  return { height: null, goal: null, time: '', privateMode: false, darkMode: true }
+}
+
+function showToast(message) {
+  toastMessage.value = message
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+    toastTimer = null
+  }, 1800)
 }
 
 function clearNotificationTimer() {
@@ -449,6 +495,7 @@ function saveSettings() {
   saveSettingsToLS(settings.value)
   settingsSaved.value = true
   setTimeout(() => (settingsSaved.value = false), 1500)
+  showToast('保存しました')
   if (notificationPermission.value === 'granted') {
     scheduleNotification()
   }
@@ -467,6 +514,7 @@ function resetSettings() {
   settingsSaved.value = true
   applyDarkMode()
   setTimeout(() => (settingsSaved.value = false), 1500)
+  showToast('設定をリセットしました')
 }
 
 function cancelEdit() {
@@ -507,6 +555,119 @@ function clearAllRecords() {
   clearRecordsFromLS()
 }
 
+function exportBackup() {
+  settingsError.value = ''
+  const payload = {
+    app: 'LOGS',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    settings: settings.value,
+    records: records.value
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `logs-backup-${getTodayDateString()}.json`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+  showToast('エクスポートしました')
+}
+
+function openImportFile() {
+  settingsError.value = ''
+  importFileInput.value?.click()
+}
+
+function validateBackupPayload(payload) {
+  const sourceRecords = Array.isArray(payload) ? payload : payload?.records
+  if (!Array.isArray(sourceRecords)) {
+    throw new Error('JSON内に記録データが見つかりません。')
+  }
+
+  const nextRecords = sourceRecords.map(record => {
+    if (!record || typeof record !== 'object') {
+      throw new Error('記録データの形式が正しくありません。')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(record.date || '')) {
+      throw new Error('記録日の形式が正しくありません。')
+    }
+    const weight = Number(record.weight)
+    if (!Number.isFinite(weight) || weight < 1) {
+      throw new Error('体重データの形式が正しくありません。')
+    }
+    const fat = record.fat === null || record.fat === '' || record.fat === undefined ? null : Number(record.fat)
+    if (fat !== null && (!Number.isFinite(fat) || fat < 0)) {
+      throw new Error('体脂肪率データの形式が正しくありません。')
+    }
+    return {
+      date: record.date,
+      weight,
+      fat,
+      note: typeof record.note === 'string' ? record.note : ''
+    }
+  }).sort((a, b) => (a.date < b.date ? 1 : -1))
+
+  const importedSettings = Array.isArray(payload) ? {} : payload?.settings || {}
+  const mergedSettings = {
+    ...getDefaultSettings(),
+    ...settings.value,
+    ...importedSettings
+  }
+  const nextSettings = {
+    height: mergedSettings.height === null || mergedSettings.height === '' ? null : Number(mergedSettings.height),
+    goal: mergedSettings.goal === null || mergedSettings.goal === '' ? null : Number(mergedSettings.goal),
+    time: typeof mergedSettings.time === 'string' ? mergedSettings.time : '',
+    privateMode: Boolean(mergedSettings.privateMode),
+    darkMode: Boolean(mergedSettings.darkMode)
+  }
+  if (nextSettings.height !== null && (!Number.isFinite(nextSettings.height) || nextSettings.height < 1)) {
+    nextSettings.height = null
+  }
+  if (nextSettings.goal !== null && (!Number.isFinite(nextSettings.goal) || nextSettings.goal < 1)) {
+    nextSettings.goal = null
+  }
+
+  return { records: nextRecords, settings: nextSettings }
+}
+
+function importBackup(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(String(reader.result || ''))
+      const imported = validateBackupPayload(payload)
+      if (!confirm('現在の記録と設定をインポート内容で置き換えますか？')) return
+      records.value = imported.records
+      settings.value = imported.settings
+      saveRecordsToLS(records.value)
+      saveSettingsToLS(settings.value)
+      selectedHistoryMonth.value = ''
+      settingsError.value = ''
+      settingsSaved.value = true
+      applyDarkMode()
+      if (notificationPermission.value === 'granted') {
+        scheduleNotification()
+      }
+      setTimeout(() => (settingsSaved.value = false), 1500)
+      showToast('インポートしました')
+    } catch (e) {
+      settingsError.value = e instanceof Error ? e.message : 'JSONの読み込みに失敗しました。'
+    } finally {
+      event.target.value = ''
+    }
+  }
+  reader.onerror = () => {
+    settingsError.value = 'ファイルの読み込みに失敗しました。'
+    event.target.value = ''
+  }
+  reader.readAsText(file)
+}
+
 function loadRecords() {
   records.value = loadRecordsFromLS()
 }
@@ -544,6 +705,7 @@ function saveRecord() {
 
   saved.value = true
   setTimeout(() => (saved.value = false), 1400)
+  showToast('記録しました')
   resetFormAfterSave()
 }
 
@@ -591,6 +753,7 @@ function saveEditedRecord() {
   setTimeout(() => (lastSavedDate.value = null), 2000)
   saved.value = true
   setTimeout(() => (saved.value = false), 1400)
+  showToast('保存しました')
   cancelEdit()
 }
 
