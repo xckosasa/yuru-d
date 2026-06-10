@@ -483,6 +483,31 @@ input[type="time"]:disabled {
   color: var(--muted);
   margin-top: 8px;
 }
+.notification-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-surface);
+}
+.notification-title {
+  font-size: 12px;
+  color: var(--muted);
+}
+.notification-status {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.notification-box .btn-text:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 .page-header {
   display: flex;
   align-items: center;

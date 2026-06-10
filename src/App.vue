@@ -162,6 +162,21 @@
           </label>
 
           <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
+          <div class="notification-box">
+            <div>
+              <div class="notification-title">通知許可</div>
+              <div class="notification-status">{{ notificationStatusText }}</div>
+            </div>
+            <button
+              class="btn-text compact"
+              type="button"
+              :disabled="!canRequestNotificationPermission"
+              @click="requestNotificationPermission"
+            >
+              通知を許可する
+            </button>
+          </div>
+          <div class="note-text" v-if="notificationHelpText">{{ notificationHelpText }}</div>
 
           <div class="error" v-if="settingsError">{{ settingsError }}</div>
 
@@ -250,6 +265,7 @@ const error = ref('')
 const saved = ref(false)
 const settingsError = ref('')
 const settingsSaved = ref(false)
+const notificationPermission = ref('unsupported')
 const activeView = ref('home')
 const showDateInput = ref(false)
 const showOptionalFields = ref(false)
@@ -318,7 +334,7 @@ function showReminderNotification() {
 
 function scheduleNotification() {
   clearNotificationTimer()
-  if (!settings.value.time || Notification.permission !== 'granted') return
+  if (!('Notification' in window) || !settings.value.time || Notification.permission !== 'granted') return
   const delay = getNextNotificationDelay()
   if (delay === null) return
 
@@ -329,16 +345,30 @@ function scheduleNotification() {
 }
 
 function requestNotificationPermission() {
-  if (!('Notification' in window)) return
+  if (!('Notification' in window)) {
+    notificationPermission.value = 'unsupported'
+    return
+  }
   if (Notification.permission === 'default') {
     Notification.requestPermission().then(permission => {
+      notificationPermission.value = permission
       if (permission === 'granted') {
         scheduleNotification()
+      } else {
+        clearNotificationTimer()
       }
     })
   } else if (Notification.permission === 'granted') {
+    notificationPermission.value = Notification.permission
     scheduleNotification()
+  } else {
+    notificationPermission.value = Notification.permission
+    clearNotificationTimer()
   }
+}
+
+function syncNotificationPermission() {
+  notificationPermission.value = 'Notification' in window ? Notification.permission : 'unsupported'
 }
 
 function applyDarkMode() {
@@ -358,7 +388,9 @@ function saveSettings() {
   saveSettingsToLS(settings.value)
   settingsSaved.value = true
   setTimeout(() => (settingsSaved.value = false), 1500)
-  requestNotificationPermission()
+  if (notificationPermission.value === 'granted') {
+    scheduleNotification()
+  }
 }
 
 function handleSettingsSave() {
@@ -528,7 +560,10 @@ onMounted(() => {
   // initialize form date to today
   form.value.date = getTodayDateString()
   applyDarkMode()
-  requestNotificationPermission()
+  syncNotificationPermission()
+  if (notificationPermission.value === 'granted') {
+    scheduleNotification()
+  }
 
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault()
@@ -544,8 +579,10 @@ onMounted(() => {
 watch(
   () => settings.value.time,
   () => {
-    if (Notification.permission === 'granted') {
+    if (notificationPermission.value === 'granted') {
       scheduleNotification()
+    } else {
+      clearNotificationTimer()
     }
   }
 )
@@ -576,6 +613,27 @@ const saveButtonText = computed(() => {
   return '保存する'
 })
 const showInstallPrompt = computed(() => (import.meta.env.DEV || deferredInstallPrompt.value) && !appInstalled.value)
+const canRequestNotificationPermission = computed(() => notificationPermission.value === 'default')
+const notificationStatusText = computed(() => {
+  if (notificationPermission.value === 'granted') return '許可済み'
+  if (notificationPermission.value === 'denied') return '拒否されています'
+  if (notificationPermission.value === 'default') return '未許可'
+  return 'このブラウザでは未対応です'
+})
+const notificationHelpText = computed(() => {
+  if (notificationPermission.value === 'granted') {
+    return settings.value.time
+      ? 'アプリを開いている間、設定した時間に通知します。'
+      : '通知時間を設定するとリマインドできます。'
+  }
+  if (notificationPermission.value === 'denied') {
+    return 'ブラウザまたは端末の設定から通知を許可してください。'
+  }
+  if (notificationPermission.value === 'default') {
+    return '通知を使う場合はボタンから許可してください。'
+  }
+  return ''
+})
 const charaIcon = computed(() => {
   if (!latest.value || !settings.value.goal) return iconNormal
   if (latest.value.weight >= settings.value.goal + 2) return iconFat
