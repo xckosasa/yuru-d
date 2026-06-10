@@ -106,10 +106,10 @@
             <button
               v-for="range in trendRanges"
               :key="range.key"
-              :class="{ active: selectedTrendRange === range.key }"
+              :class="{ active: activeTrendRangeKey === range.key }"
               type="button"
-              :disabled="selectedTrendRange === range.key"
-              @click="selectedTrendRange = range.key"
+              :disabled="activeTrendRangeKey === range.key || !isTrendRangeAvailable(range)"
+              @click="selectTrendRange(range)"
             >
               {{ range.label }}
             </button>
@@ -139,7 +139,7 @@
             :records="filteredTrendRecords"
             :goal="settings.goal"
             :private-mode="settings.privateMode"
-            :range-key="selectedTrendRange"
+            :range-key="activeTrendRangeKey"
           />
           <div v-else class="placeholder">
             <p>この期間の記録が2件以上でグラフを表示します。</p>
@@ -620,6 +620,18 @@ function goNewerHistoryMonth() {
   selectedHistoryMonth.value = historyMonths.value[currentIndex - 1]
 }
 
+function isTrendRangeAvailable(range) {
+  if (range.key === 'all') return records.value.length > 0
+  if (range.key === '1w') return records.value.length > 0
+  if (!oldestRecord.value || !latest.value) return false
+  return recordsSpanDays.value >= range.days
+}
+
+function selectTrendRange(range) {
+  if (!isTrendRangeAvailable(range)) return
+  selectedTrendRange.value = range.key
+}
+
 async function installPWA() {
   if (!deferredInstallPrompt.value) return
   deferredInstallPrompt.value.prompt()
@@ -670,6 +682,7 @@ watch(
 
 const latest = computed(() => (records.value.length ? records.value[0] : null))
 const firstRecord = computed(() => (records.value.length ? records.value[records.value.length - 1] : null))
+const oldestRecord = firstRecord
 const todayDate = computed(() => getTodayDateString())
 const selectedDateLabel = computed(() => {
   const suffix = form.value.date === todayDate.value ? '今日' : '選択中'
@@ -717,8 +730,21 @@ const trendRanges = [
   { key: '1y', label: '1Y', days: 365 },
   { key: 'all', label: 'ALL', days: null }
 ]
-const filteredTrendRecords = computed(() => {
+const recordsSpanDays = computed(() => {
+  if (!latest.value || !oldestRecord.value) return 0
+  const latestDate = parseDateString(latest.value.date)
+  const oldestDate = parseDateString(oldestRecord.value.date)
+  return Math.floor((latestDate - oldestDate) / 86400000) + 1
+})
+const availableTrendRanges = computed(() => trendRanges.filter(range => isTrendRangeAvailable(range)))
+const fallbackTrendRange = computed(() => availableTrendRanges.value.find(range => range.key === '1w') || availableTrendRanges.value[0] || trendRanges[0])
+const activeTrendRangeKey = computed(() => {
   const selected = trendRanges.find(range => range.key === selectedTrendRange.value)
+  if (selected && isTrendRangeAvailable(selected)) return selected.key
+  return fallbackTrendRange.value.key
+})
+const filteredTrendRecords = computed(() => {
+  const selected = trendRanges.find(range => range.key === activeTrendRangeKey.value)
   if (!selected || selected.days === null) return records.value
 
   const latestRecord = latest.value
