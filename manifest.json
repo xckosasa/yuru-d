@@ -3,6 +3,7 @@
   "short_name": "LOGS",
   "start_url": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f3faf8",
   "theme_color": "#6fc2a6",
   "icons": [
