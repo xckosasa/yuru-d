@@ -26,7 +26,7 @@ export function loadSettingsFromLS() {
     const raw = storageAPI.getItem(LS_SETTINGS)
     if (raw) return JSON.parse(raw)
   } catch (e) {}
-  return { height: null, goal: null, time: '', privateMode: false, darkMode: false }
+  return { height: null, goal: null, time: '', privateMode: false, darkMode: true }
 }
 
 export function saveSettingsToLS(settings) {

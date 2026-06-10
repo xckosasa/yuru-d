@@ -17,8 +17,8 @@
       <line :x1="scale.P" :x2="scale.W - scale.P" :y1="scale.H - scale.P" :y2="scale.H - scale.P" stroke="var(--chart-axis, rgba(0,0,0,0.2))" stroke-width="1.5" />
 
       <!-- goal line -->
-      <line v-if="hasGoal" :x1="scale.P" :x2="scale.W - scale.P" :y1="goalY" :y2="goalY" stroke="var(--chart-goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
-      <text v-if="hasGoal" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="18" text-anchor="end" fill="var(--chart-goal, #ff6b6b)">目標 {{ goal }}kg</text>
+      <line v-if="hasGoal && !privateMode" :x1="scale.P" :x2="scale.W - scale.P" :y1="goalY" :y2="goalY" stroke="var(--chart-goal, #ff6b6b)" stroke-width="1.6" stroke-dasharray="6 4" />
+      <text v-if="hasGoal && !privateMode" :x="scale.W - scale.P - 8" :y="goalY - 10" font-size="18" text-anchor="end" fill="var(--chart-goal, #ff6b6b)">目標 {{ goal }}kg</text>
 
       <!-- half-kg dotted grid -->
       <g class="half-grid" stroke="var(--chart-grid-half, #d0d0d0)" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
@@ -27,7 +27,7 @@
 
       <!-- point labels -->
       <g class="point-labels" fill="var(--chart-point-label, #333)" font-size="18">
-        <text v-for="(p, i) in points" :key="'pl'+i" :x="p.x" :y="p.y - 12" text-anchor="middle">{{ p.weight.toFixed(1) }}kg</text>
+        <text v-for="(p, i) in points" :key="'pl'+i" :x="p.x" :y="p.y - 12" text-anchor="middle">{{ p.labelText }}</text>
       </g>
 
       <!-- polyline -->
@@ -49,7 +49,17 @@
 <script setup>
 import { computed } from 'vue'
 
-const props = defineProps({ records: { type: Array, required: true }, goal: { type: Number, default: null } })
+const props = defineProps({
+  records: { type: Array, required: true },
+  goal: { type: Number, default: null },
+  privateMode: { type: Boolean, default: false }
+})
+
+function formatSignedKg(value) {
+  const rounded = Number(value.toFixed(1))
+  if (rounded === 0) return '±0.0kg'
+  return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}kg`
+}
 
 const scale = computed(() => {
   const recs = (props.records || []).slice().reverse()
@@ -59,15 +69,18 @@ const scale = computed(() => {
   const innerW = W - P * 2
   const innerH = H - P * 2
 
-  const weights = recs.map(r => r.weight)
-  if (props.goal !== null && props.goal !== undefined) weights.push(props.goal)
-  if (!weights.length) return null
+  const baseWeight = recs[0]?.weight ?? null
+  const values = props.privateMode && baseWeight !== null
+    ? recs.map(r => Number((r.weight - baseWeight).toFixed(1)))
+    : recs.map(r => r.weight)
+  if (!props.privateMode && props.goal !== null && props.goal !== undefined) values.push(props.goal)
+  if (!values.length) return null
 
-  const min = Math.min(...weights)
-  const max = Math.max(...weights)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
   const range = max === min ? 1 : max - min
 
-  return { recs, W, H, P, innerW, innerH, min, max, range }
+  return { recs, W, H, P, innerW, innerH, min, max, range, baseWeight }
 })
 
 const points = computed(() => {
@@ -77,9 +90,13 @@ const points = computed(() => {
   return recs.map((r, i) => {
     const t = recs.length === 1 ? 0.5 : i / (recs.length - 1)
     const x = P + t * innerW
-    const y = P + ((max - r.weight) / range) * innerH
+    const value = props.privateMode && s.baseWeight !== null
+      ? Number((r.weight - s.baseWeight).toFixed(1))
+      : r.weight
+    const y = P + ((max - value) / range) * innerH
     const mmdd = r.date.slice(5).replace('-', '/')
-    return { x, y, label: mmdd, weight: r.weight }
+    const labelText = props.privateMode ? formatSignedKg(value) : `${r.weight.toFixed(1)}kg`
+    return { x, y, label: mmdd, weight: r.weight, value, labelText }
   })
 })
 

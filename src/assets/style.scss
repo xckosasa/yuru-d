@@ -73,12 +73,57 @@ body {
 .app-shell {
   display: flex;
   justify-content: center;
-  padding: 20px 12px;
+  padding: 20px 12px 96px;
 }
 .app {
   width: 100%;
   max-width: 420px;
   background: var(--primary) !important;
+}
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 384px;
+  height: 64px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 12px;
+  z-index: 20;
+}
+.bottom-nav button {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  opacity: 0.78;
+  color: rgba(18, 18, 18, 0.72);
+  cursor: pointer;
+}
+.bottom-nav button.active {
+  opacity: 1;
+  color: #121212;
+}
+.bottom-nav button:disabled {
+  cursor: default;
+}
+.bottom-nav .nav-icon {
+  display: block;
+  width: 34px;
+  height: 34px;
+  background: currentColor;
+  mask: var(--icon) center / contain no-repeat;
+  -webkit-mask: var(--icon) center / contain no-repeat;
 }
 .header-card {
   margin-bottom: 12px;
@@ -164,7 +209,7 @@ body {
   color: var(--text);
   >span{
     font-size:14px;
-    color:#666;
+    color:var(--muted);
   }
 }
 .big-number .label {
@@ -293,12 +338,12 @@ input[type="time"]:disabled {
   border: none;
   border-radius: 10px;
   font-weight: 600;
-  color:var(--text);
+  color: #121212;
   &.lg {
     height: 48px;
     font-size: 16px;
     font-weight: 800;
-    min-width: 200px;
+    width: 100%;
     margin: 0 auto;
     display: block;
   }
@@ -437,6 +482,22 @@ input[type="time"]:disabled {
   font-size: 13px;
   color: var(--muted);
   margin-top: 8px;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.page-header .card-title {
+  margin-bottom: 0;
+}
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
 }
 .modal-backdrop {
   position: fixed;

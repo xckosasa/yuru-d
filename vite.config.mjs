@@ -10,6 +10,10 @@ export default defineConfig({
     strictPort: true,
     headers: {
       'Cache-Control': 'no-store'
+    },
+    watch: {
+      usePolling: true,
+      interval: 100
     }
   }
 })

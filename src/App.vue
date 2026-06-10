@@ -6,12 +6,9 @@
           <h1 class="title" data-text="LOGS"><img :src="logo" alt=""></h1>
           <p class="subtitle">体重だけは記録しよう。</p>
         </div>
-        <div class="header-actions">
-          <button class="btn-icon" type="button" @click="showSettingsModal = true"><img :src="gear" alt=""></button>
-        </div>
       </header>
 
-      <section class="card summary-card">
+      <section v-if="activeView === 'home'" class="card summary-card">
         <div v-if="latest" class="summary-grid">
           <div class="big-number">
             <div class="chara">
@@ -48,8 +45,8 @@
         </div>
       </section>
 
-      <section :class="['card','form-card', { flash: saved }]">
-        <h2 class="card-title">今日の記録</h2>
+      <section v-if="activeView === 'home'" :class="['card','form-card', { flash: saved }]">
+        <h2 class="card-title">TODAY</h2>
         <form @submit.prevent="saveRecord">
           <div class="date-summary">
             <div>
@@ -94,26 +91,26 @@
         </form>
       </section>
 
-      <section v-if="showInstallPrompt" class="card install-card">
+      <section v-if="activeView === 'home' && showInstallPrompt" class="card install-card">
         <div>
-          <h2 class="card-title">ホーム画面に追加</h2>
+          <h2 class="card-title">ADD TO HOME</h2>
           <p>すぐ記録できるように、アプリとして追加できます。</p>
         </div>
         <button class="btn-icon lg" type="button" @click="installPWA"><img src="/icons/icon-192.png" alt="追加"></button>
       </section>
 
-      <section class="card graph-card">
-        <h2 class="card-title">体重推移</h2>
+      <section v-if="activeView === 'trend'" class="card graph-card">
+        <h2 class="card-title">TREND</h2>
         <div v-if="records.length >= 2">
-          <WeightChart :records="records" :goal="settings.goal" />
+          <WeightChart :records="records" :goal="settings.goal" :private-mode="settings.privateMode" />
         </div>
         <div v-else class="placeholder">
           <p>記録が2件以上でグラフを表示します。</p>
         </div>
       </section>
 
-      <section class="card list-card">
-        <h2 class="card-title">記録一覧</h2>
+      <section v-if="activeView === 'history'" class="card list-card">
+        <h2 class="card-title">HISTORY</h2>
         <div v-if="records.length === 0" class="empty-small">まだ記録がありません。</div>
         <ul class="record-list">
           <li v-for="(r, i) in records" :key="r.date" :class="['record-item', { 'new-record': r.date === lastSavedDate }]">
@@ -134,96 +131,99 @@
           </li>
         </ul>
       </section>
+      <section v-if="activeView === 'settings'" class="card settings-card">
+        <h2 class="card-title">SETTINGS</h2>
+        <form @submit.prevent="handleSettingsSave">
+          <label class="toggle-switch">
+            <input type="checkbox" v-model="settings.privateMode" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">体重を非公開にする</span>
+          </label>
+
+          <label class="toggle-switch">
+            <input type="checkbox" v-model="settings.darkMode" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">ダークモード</span>
+          </label>
+
+          <label>
+            身長 (cm)
+            <input type="number" v-model.number="settings.height" min="1" />
+          </label>
+
+          <label>
+            目標体重 (kg)
+            <input type="number" v-model.number="settings.goal" min="1" step="0.1" />
+          </label>
+
+          <label>
+            通知したい時間
+            <input type="time" v-model="settings.time" />
+          </label>
+
+          <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
+
+          <div class="error" v-if="settingsError">{{ settingsError }}</div>
+
+          <div class="page-actions">
+            <button class="btn-text" type="button" @click="resetSettings">リセット</button>
+            <button class="btn-text" type="button" @click="clearAllRecords">ログをクリア</button>
+            <button class="btn-primary" type="submit">設定を保存</button>
+          </div>
+          <span class="saved" v-if="settingsSaved">保存しました</span>
+        </form>
+      </section>
+
+      <section v-if="activeView === 'edit'" class="card edit-card">
+        <div class="page-header">
+          <h2 class="card-title">EDIT</h2>
+          <button class="btn-text compact" type="button" @click="cancelEdit()">戻る</button>
+        </div>
+        <form @submit.prevent="saveEditedRecord">
+          <label>
+            日付
+            <input type="date" v-model="editForm.date" disabled />
+          </label>
+
+          <label>
+            体重 (kg)
+            <input type="number" step="0.1" v-model.number="editForm.weight" placeholder="例: 64.2" />
+          </label>
+
+          <label>
+            体脂肪率 (%) <span class="hint">任意</span>
+            <input type="number" step="0.1" v-model.number="editForm.fat" placeholder="例: 18.5" />
+          </label>
+
+          <label>
+            メモ
+            <input type="text" v-model="editForm.note" placeholder="今日は調子が良い" />
+          </label>
+
+          <div class="error" v-if="error">{{ error }}</div>
+
+          <div class="page-actions">
+            <button class="btn-text" type="button" @click="deleteRecord(editingRecord)" v-if="editingRecord">削除</button>
+            <button class="btn-primary" type="submit">保存</button>
+          </div>
+        </form>
+      </section>
     </main>
 
-    <Transition name="modal-fade">
-      <div v-if="showSettingsModal" class="modal-backdrop" @click.self="showSettingsModal = false">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h2>設定</h2>
-            <button class="close-button" @click="showSettingsModal = false">✕</button>
-          </div>
-          <form @submit.prevent="handleSettingsSave">
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="settings.privateMode" />
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">体重を非公開にする</span>
-            </label>
-
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="settings.darkMode" />
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">ダークモード</span>
-            </label>
-
-            <label>
-              身長 (cm)
-              <input type="number" v-model.number="settings.height" min="1" />
-            </label>
-
-            <label>
-              目標体重 (kg)
-              <input type="number" v-model.number="settings.goal" min="1" step="0.1" />
-            </label>
-
-            <label>
-              通知したい時間
-              <input type="time" v-model="settings.time" />
-            </label>
-
-            <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
-
-            <div class="error" v-if="settingsError">{{ settingsError }}</div>
-
-            <div class="modal-actions">
-              <button class="btn-text" type="button" @click="resetSettings">リセット</button>
-              <button class="btn-text" type="button" @click="clearAllRecords">ログをクリア</button>
-              <button class="btn-primary" type="submit">設定を保存</button>
-            </div>
-            <span class="saved" v-if="settingsSaved">保存しました</span>
-          </form>
-        </div>
-      </div>
-    </Transition>
-
-    <Transition name="modal-fade">
-      <div v-if="showEditModal" class="modal-backdrop" @click.self="cancelEdit()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h2>記録を編集</h2>
-            <button class="close-button" @click="cancelEdit()">✕</button>
-          </div>
-          <form @submit.prevent="saveEditedRecord">
-            <label>
-              日付
-              <input type="date" v-model="editForm.date" disabled />
-            </label>
-
-            <label>
-              体重 (kg)
-              <input type="number" step="0.1" v-model.number="editForm.weight" placeholder="例: 64.2" />
-            </label>
-
-            <label>
-              体脂肪率 (%) <span class="hint">任意</span>
-              <input type="number" step="0.1" v-model.number="editForm.fat" placeholder="例: 18.5" />
-            </label>
-
-            <label>
-              メモ
-              <input type="text" v-model="editForm.note" placeholder="今日は調子が良い" />
-            </label>
-
-            <div class="error" v-if="error">{{ error }}</div>
-
-            <div class="modal-actions">
-              <button class="btn-text" type="button" @click="deleteRecord(editingRecord)" v-if="editingRecord">削除</button>
-              <button class="btn-primary" type="submit">保存</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </Transition>
+    <nav class="bottom-nav" aria-label="画面切り替え">
+      <button :class="{ active: activeView === 'home' }" type="button" :disabled="activeView === 'home'" @click="activeView = 'home'">
+        <span class="nav-icon" :style="{ '--icon': `url(${iconHome})` }" aria-hidden="true"></span>
+      </button>
+      <button :class="{ active: activeView === 'trend' }" type="button" :disabled="activeView === 'trend'" @click="activeView = 'trend'">
+        <span class="nav-icon" :style="{ '--icon': `url(${iconChart})` }" aria-hidden="true"></span>
+      </button>
+      <button :class="{ active: activeView === 'history' || activeView === 'edit' }" type="button" :disabled="activeView === 'history' || activeView === 'edit'" @click="activeView = 'history'">
+        <span class="nav-icon" :style="{ '--icon': `url(${iconList})` }" aria-hidden="true"></span>
+      </button>
+      <button :class="{ active: activeView === 'settings' }" type="button" :disabled="activeView === 'settings'" @click="activeView = 'settings'">
+        <span class="nav-icon" :style="{ '--icon': `url(${iconSetting})` }" aria-hidden="true"></span>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -232,13 +232,16 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
 import logo from './assets/img/logo.svg'
-import gear from './assets/img/gear.svg'
+import iconHome from './assets/img/icon-home.svg'
+import iconChart from './assets/img/icon-chart.svg'
+import iconList from './assets/img/icon-list.svg'
+import iconSetting from './assets/img/icon-setting.svg'
 import iconFat from './assets/img/icon-fat.svg'
 import iconNormal from './assets/img/icon-normal.svg'
 import iconSlim from './assets/img/icon-slim.svg'
 import WeightChart from './components/WeightChart.vue'
 
-const settings = ref({ height: null, goal: null, time: '', privateMode: false, darkMode: false })
+const settings = ref({ height: null, goal: null, time: '', privateMode: false, darkMode: true })
 const records = ref([])
 
 const form = ref({ date: '', weight: null, fat: null, note: '' })
@@ -247,8 +250,7 @@ const error = ref('')
 const saved = ref(false)
 const settingsError = ref('')
 const settingsSaved = ref(false)
-const showSettingsModal = ref(false)
-const showEditModal = ref(false)
+const activeView = ref('home')
 const showDateInput = ref(false)
 const showOptionalFields = ref(false)
 const lastSavedDate = ref(null)
@@ -362,14 +364,11 @@ function saveSettings() {
 function handleSettingsSave() {
   saveSettings()
   applyDarkMode()
-  if (!settingsError.value) {
-    showSettingsModal.value = false
-  }
 }
 
 function resetSettings() {
   if (!confirm('設定をリセットしますか？')) return
-  settings.value = { height: null, goal: null, time: '', privateMode: false, darkMode: false }
+  settings.value = { height: null, goal: null, time: '', privateMode: false, darkMode: true }
   saveSettingsToLS(settings.value)
   settingsError.value = ''
   settingsSaved.value = true
@@ -378,7 +377,7 @@ function resetSettings() {
 }
 
 function cancelEdit() {
-  showEditModal.value = false
+  activeView.value = 'history'
   editingRecord.value = null
   error.value = ''
   editForm.value = {
@@ -391,7 +390,7 @@ function cancelEdit() {
 
 function editRecord(record) {
   editingRecord.value = record
-  showEditModal.value = true
+  activeView.value = 'edit'
   editForm.value = {
     date: record.date,
     weight: record.weight,
@@ -568,6 +567,7 @@ const selectedDateLabel = computed(() => {
 const existingFormRecord = computed(() => records.value.find(record => record.date === form.value.date))
 const weightPlaceholder = computed(() => {
   if (!latest.value) return '例: 64.2'
+  if (settings.value.privateMode) return '前回の記録を参考に入力'
   return `前回 ${formatWeight(latest.value.weight)}`
 })
 const saveButtonText = computed(() => {
@@ -591,6 +591,7 @@ const firstDayDiffText = computed(() => {
 })
 
 const bmi = computed(() => {
+  if (settings.value.privateMode) return '非公開'
   if (!latest.value || !settings.value.height) return '—'
   const b = computeBMI(latest.value.weight, settings.value.height)
   return b == null ? '—' : String(b.toFixed ? b.toFixed(1) : b)
@@ -608,7 +609,7 @@ const goalDiffText = computed(() => {
   if (!settings.value.goal || !latest.value) return '目標が設定されていません'
   const d = (settings.value.goal - latest.value.weight).toFixed(1)
   if (d > 0) return `目標まで あと ${d}kg`
-  if (d < 0) return `目標を ${Math.abs(d)}kg 下回っています`
+  if (d < 0) return `目標まで あと ${Math.abs(d)}kg`
   return '目標達成です！おめでとうございます'
 })
 
