@@ -6,6 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 .env
 
+# Local development helpers
+dev-seed-records.html
+
 # Capacitor / iOS local outputs
 ios/App/Pods/
 ios/App/build/
