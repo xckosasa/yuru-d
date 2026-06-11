@@ -1,5 +1,13 @@
 {
   "appId": "com.kosazayousuke.logs",
   "appName": "LOGS",
-  "webDir": "dist"
+  "webDir": "dist",
+  "backgroundColor": "#70ebb8",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#70ebb8",
+      "showSpinner": false
+    }
+  }
 }

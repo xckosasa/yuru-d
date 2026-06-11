@@ -90,7 +90,7 @@ body {
 .app-shell {
   display: flex;
   justify-content: center;
-  padding: 20px 12px 96px;
+  padding: calc(20px + env(safe-area-inset-top)) 12px calc(96px + env(safe-area-inset-bottom));
 }
 .app {
   width: 100%;
@@ -117,7 +117,7 @@ body {
 .bottom-nav {
   position: fixed;
   left: 50%;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   width: calc(100% - 48px);
   max-width: 384px;
@@ -131,12 +131,6 @@ body {
   z-index: 20;
   backdrop-filter: blur(10px); /* 背景を10pxぼかす */
   background-color: rgba(255, 255, 255, 0.9); /* 要素の色 */
-  -webkit-box-shadow:
-    15px 15px 15px #60d8a5,
-    -15px -15px 15px var(--primary); /* 光と影 */
-  box-shadow:
-    15px 15px 15px #60d8a5,
-    -15px -15px 15px var(--primary); /* 光と影 */
 }
 .bottom-nav button {
   width: 44px;

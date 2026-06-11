@@ -64,6 +64,19 @@ Xcodeで開く:
 npm run cap:open:ios
 ```
 
+iOSアイコン / スプラッシュ生成:
+
+```bash
+npm run cap:assets:ios
+```
+
+元画像:
+
+- `resources/icon.png`: 1024 x 1024px
+- `resources/splash.png`: 2732 x 2732px
+
+画像を差し替えた場合は `npm run cap:assets:ios` を実行し、Xcodeで再ビルドしてください。
+
 Git管理方針:
 
 - `ios/` はGit管理対象です。
