@@ -5,3 +5,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .env
+
+# Capacitor / iOS local outputs
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+**/DerivedData/
+**/xcuserdata/
+*.xcuserstate
