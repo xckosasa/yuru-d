@@ -8,6 +8,8 @@
         </div>
       </header>
 
+      <Transition name="view-rise" mode="out-in">
+        <div :key="activeView" class="view-panel">
       <section v-if="activeView === 'home'" class="card summary-card">
         <div v-if="latest" class="summary-grid">
           <div class="big-number">
@@ -68,8 +70,9 @@
             <input type="number" step="0.1" v-model.number="form.weight" :placeholder="weightPlaceholder" />
           </label>
 
-          <button class="btn-text optional-toggle" type="button" @click="showOptionalFields = !showOptionalFields">
-            {{ showOptionalFields ? '体脂肪率・メモを閉じる' : '体脂肪率・メモも入力する' }}
+          <button class="optional-toggle" type="button" @click="showOptionalFields = !showOptionalFields">
+            <span class="optional-icon" :style="{ '--icon': `url(${iconEdit})` }" aria-hidden="true"></span>
+            <span>{{ showOptionalFields ? '体脂肪・メモを閉じる' : '体脂肪・メモを追加' }}</span>
           </button>
 
           <div v-if="showOptionalFields" class="optional-fields">
@@ -180,35 +183,45 @@
       <section v-if="activeView === 'settings'" class="card settings-card">
         <h2 class="card-title">SETTINGS</h2>
         <form @submit.prevent="handleSettingsSave">
-          <label class="toggle-switch">
-            <input type="checkbox" v-model="settings.privateMode" />
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label">体重を非公開にする</span>
-          </label>
+          <div class="settings-toggle-grid">
+            <label class="toggle-switch compact-toggle">
+              <input type="checkbox" v-model="settings.privateMode" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label">体重非公開</span>
+            </label>
 
-          <label class="toggle-switch">
-            <input type="checkbox" v-model="settings.darkMode" />
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label">ダークモード</span>
-          </label>
+            <label class="toggle-switch compact-toggle">
+              <input type="checkbox" v-model="settings.darkMode" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label">ダークモード</span>
+            </label>
+          </div>
 
-          <label>
-            身長 (cm)
-            <input type="number" v-model.number="settings.height" min="1" />
-          </label>
+          <div class="settings-input-grid">
+            <label>
+              身長 (cm)
+              <select v-model.number="settings.height">
+                <option :value="null">—</option>
+                <option v-for="height in heightOptions" :key="height" :value="height">{{ height }}</option>
+              </select>
+            </label>
 
-          <label>
-            目標体重 (kg)
-            <input type="number" v-model.number="settings.goal" min="1" step="0.1" />
-          </label>
+            <label>
+              目標 (kg)
+              <select v-model.number="settings.goal">
+                <option :value="null">—</option>
+                <option v-for="weight in goalWeightOptions" :key="weight" :value="weight">{{ weight.toFixed(1) }}</option>
+              </select>
+            </label>
 
-          <label>
-            通知したい時間
-            <input type="time" v-model="settings.time" />
-          </label>
+            <label>
+              通知時間
+              <input type="time" v-model="settings.time" />
+            </label>
+          </div>
 
           <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
-          <div class="notification-box">
+          <div class="settings-section notification-box">
             <div>
               <div class="notification-title">通知許可</div>
               <div class="notification-status">{{ notificationStatusText }}</div>
@@ -224,8 +237,8 @@
           </div>
           <div class="note-text" v-if="notificationHelpText">{{ notificationHelpText }}</div>
 
-          <div class="backup-box">
-            <div>
+          <div class="settings-section backup-box">
+            <div class="settings-section-copy">
               <div class="backup-title">BACKUP</div>
               <div class="note-text">記録と設定をJSONで保存・復元できます。</div>
             </div>
@@ -242,19 +255,31 @@
             />
           </div>
 
-          <div class="privacy-box">
-            <div>
+          <div class="settings-section privacy-box">
+            <div class="settings-section-copy">
               <div class="privacy-title">PRIVACY</div>
               <div class="note-text">記録は端末内に保存され、外部サーバーへ送信されません。</div>
             </div>
             <a class="btn-text compact privacy-link" href="/privacy.html" target="_blank" rel="noopener">POLICY</a>
           </div>
 
+          <div class="settings-section data-management">
+            <button class="data-management-toggle" type="button" @click="showDataManagement = !showDataManagement">
+              <span>
+                <span class="data-management-title">DATA MANAGEMENT</span>
+                <span class="data-management-note">リセットやログ削除など</span>
+              </span>
+              <span class="data-management-state">{{ showDataManagement ? 'CLOSE' : 'OPEN' }}</span>
+            </button>
+            <div v-if="showDataManagement" class="danger-actions">
+              <button class="btn-danger" type="button" @click="resetSettings">リセット</button>
+              <button class="btn-danger" type="button" @click="clearAllRecords">ログをクリア</button>
+            </div>
+          </div>
+
           <div class="error" v-if="settingsError">{{ settingsError }}</div>
 
-          <div class="page-actions">
-            <button class="btn-text" type="button" @click="resetSettings">リセット</button>
-            <button class="btn-text" type="button" @click="clearAllRecords">ログをクリア</button>
+          <div class="page-actions settings-save-actions">
             <button class="btn-primary" type="submit">設定を保存</button>
           </div>
         </form>
@@ -294,6 +319,8 @@
           </div>
         </form>
       </section>
+        </div>
+      </Transition>
     </main>
 
     <nav class="bottom-nav" aria-label="画面切り替え">
@@ -316,6 +343,25 @@
         {{ toastMessage }}
       </div>
     </Transition>
+
+    <Transition name="confirm-fade">
+      <div v-if="confirmDialog" class="confirm-backdrop" @click.self="resolveConfirm(false)">
+        <div class="confirm-dialog" role="dialog" aria-modal="true" :aria-labelledby="confirmDialog.titleId">
+          <h2 :id="confirmDialog.titleId">{{ confirmDialog.title }}</h2>
+          <p>{{ confirmDialog.message }}</p>
+          <div class="confirm-actions">
+            <button class="btn-text compact" type="button" @click="resolveConfirm(false)">キャンセル</button>
+            <button
+              :class="['btn-primary', 'confirm-button', { danger: confirmDialog.danger }]"
+              type="button"
+              @click="resolveConfirm(true)"
+            >
+              {{ confirmDialog.confirmText }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -328,6 +374,7 @@ import iconHome from './assets/img/icon-home.svg'
 import iconChart from './assets/img/icon-chart.svg'
 import iconList from './assets/img/icon-list.svg'
 import iconSetting from './assets/img/icon-setting.svg'
+import iconEdit from './assets/img/icon-edit.svg'
 import iconFat from './assets/img/icon-fat.svg'
 import iconNormal from './assets/img/icon-normal.svg'
 import iconSlim from './assets/img/icon-slim.svg'
@@ -335,6 +382,8 @@ import WeightChart from './components/WeightChart.vue'
 
 const settings = ref({ height: null, goal: null, time: '', privateMode: false, darkMode: true })
 const records = ref([])
+const heightOptions = Array.from({ length: 101 }, (_, index) => 120 + index)
+const goalWeightOptions = Array.from({ length: 241 }, (_, index) => Number((30 + index * 0.5).toFixed(1)))
 
 const form = ref({ date: '', weight: null, fat: null, note: '' })
 const editForm = ref({ date: '', weight: null, fat: null, note: '' })
@@ -343,12 +392,14 @@ const saved = ref(false)
 const settingsError = ref('')
 const settingsSaved = ref(false)
 const toastMessage = ref('')
+const confirmDialog = ref(null)
 const notificationPermission = ref('unsupported')
 const activeView = ref('home')
 const selectedTrendRange = ref('1m')
 const selectedHistoryMonth = ref('')
 const showDateInput = ref(false)
 const showOptionalFields = ref(false)
+const showDataManagement = ref(false)
 const lastSavedDate = ref(null)
 const editingRecord = ref(null)
 const deferredInstallPrompt = ref(null)
@@ -357,6 +408,7 @@ const importFileInput = ref(null)
 
 let notificationTimer = null
 let toastTimer = null
+let confirmResolver = null
 
 function getTodayDateString() {
   const now = new Date()
@@ -396,6 +448,27 @@ function showToast(message) {
     toastMessage.value = ''
     toastTimer = null
   }, 1800)
+}
+
+function requestConfirm({ title, message, confirmText = 'OK', danger = false }) {
+  return new Promise(resolve => {
+    confirmResolver = resolve
+    confirmDialog.value = {
+      title,
+      message,
+      confirmText,
+      danger,
+      titleId: `confirm-title-${Date.now()}`
+    }
+  })
+}
+
+function resolveConfirm(result) {
+  if (confirmResolver) {
+    confirmResolver(result)
+    confirmResolver = null
+  }
+  confirmDialog.value = null
 }
 
 function clearNotificationTimer() {
@@ -506,8 +579,14 @@ function handleSettingsSave() {
   applyDarkMode()
 }
 
-function resetSettings() {
-  if (!confirm('設定をリセットしますか？')) return
+async function resetSettings() {
+  const ok = await requestConfirm({
+    title: '設定をリセットしますか？',
+    message: '身長、目標体重、通知時刻などの設定を初期状態に戻します。',
+    confirmText: 'リセット',
+    danger: true
+  })
+  if (!ok) return
   settings.value = { height: null, goal: null, time: '', privateMode: false, darkMode: true }
   saveSettingsToLS(settings.value)
   settingsError.value = ''
@@ -540,8 +619,14 @@ function editRecord(record) {
   }
 }
 
-function deleteRecord(record) {
-  if (!confirm('この記録を削除しますか？')) return
+async function deleteRecord(record) {
+  const ok = await requestConfirm({
+    title: 'この記録を削除しますか？',
+    message: '削除した記録は元に戻せません。',
+    confirmText: '削除',
+    danger: true
+  })
+  if (!ok) return
   records.value = records.value.filter(r => r.date !== record.date)
   saveRecordsToLS(records.value)
   if (editingRecord.value?.date === record.date) {
@@ -549,8 +634,14 @@ function deleteRecord(record) {
   }
 }
 
-function clearAllRecords() {
-  if (!confirm('すべての記録を削除しますか？この操作は元に戻せません。')) return
+async function clearAllRecords() {
+  const ok = await requestConfirm({
+    title: 'すべてのログを削除しますか？',
+    message: 'この操作は元に戻せません。必要な場合は先にバックアップをエクスポートしてください。',
+    confirmText: '削除',
+    danger: true
+  })
+  if (!ok) return
   records.value = []
   clearRecordsFromLS()
 }
@@ -637,11 +728,17 @@ function importBackup(event) {
   const file = event.target.files?.[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const payload = JSON.parse(String(reader.result || ''))
       const imported = validateBackupPayload(payload)
-      if (!confirm('現在の記録と設定をインポート内容で置き換えますか？')) return
+      const ok = await requestConfirm({
+        title: 'バックアップを復元しますか？',
+        message: '現在の記録と設定をインポート内容で置き換えます。',
+        confirmText: '復元',
+        danger: true
+      })
+      if (!ok) return
       records.value = imported.records
       settings.value = imported.settings
       saveRecordsToLS(records.value)
@@ -952,16 +1049,11 @@ const notificationStatusText = computed(() => {
   return 'このブラウザでは未対応です'
 })
 const notificationHelpText = computed(() => {
-  if (notificationPermission.value === 'granted') {
-    return settings.value.time
-      ? 'アプリを開いている間、設定した時間に通知します。'
-      : '通知時間を設定するとリマインドできます。'
-  }
   if (notificationPermission.value === 'denied') {
     return 'ブラウザまたは端末の設定から通知を許可してください。'
   }
   if (notificationPermission.value === 'default') {
-    return '通知を使う場合はボタンから許可してください。'
+    return settings.value.time ? '通知を使う場合は許可してください。' : ''
   }
   return ''
 })
