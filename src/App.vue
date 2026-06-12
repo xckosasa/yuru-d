@@ -219,12 +219,11 @@
               <input type="time" v-model="settings.time" />
             </label>
           </div>
-
-          <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
           <div class="settings-section notification-box">
             <div>
               <div class="notification-title">通知許可</div>
               <div class="notification-status">{{ notificationStatusText }}</div>
+              <div class="note-text">毎日 {{ settings.time || '—' }} に記録する予定</div>
             </div>
             <button
               class="btn-text compact"
@@ -280,7 +279,7 @@
           <div class="error" v-if="settingsError">{{ settingsError }}</div>
 
           <div class="page-actions settings-save-actions">
-            <button class="btn-primary" type="submit">設定を保存</button>
+            <button class="btn-primary lg" type="submit">設定を保存</button>
           </div>
         </form>
       </section>

@@ -25,6 +25,14 @@
         <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="ln.y" :y2="ln.y" />
       </g>
 
+      <!-- polyline -->
+      <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+
+      <!-- points -->
+      <g v-for="(p, i) in visiblePointMarkers" :key="i">
+        <circle :cx="p.x" :cy="p.y" r="5" :fill="p.isLatest ? 'var(--accent, #2b9)':'var(--chart-point-bg, #fff)'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
+      </g>
+
       <!-- point labels -->
       <g class="point-labels" fill="var(--chart-point-label, #333)" font-size="18">
         <g v-for="(p, i) in valueLabelPoints" :key="'pl'+i">
@@ -38,14 +46,6 @@
           />
           <text :x="p.x" :y="p.labelY" text-anchor="middle">{{ p.labelText }}</text>
         </g>
-      </g>
-
-      <!-- polyline -->
-      <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
-
-      <!-- points -->
-      <g v-for="(p, i) in visiblePointMarkers" :key="i">
-        <circle :cx="p.x" :cy="p.y" r="5" :fill="p.isLatest ? 'var(--accent, #2b9)':'var(--chart-point-bg, #fff)'" stroke="var(--primary, #70EBB8)" stroke-width="2.5" />
       </g>
 
       <!-- x labels -->
@@ -223,9 +223,9 @@ const xLabelY = computed(() => {
 .grid line { stroke: rgba(0,0,0,0.06); }
 .ylabels { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
 .point-label-bg {
-  fill: var(--card, #fff);
-  stroke: var(--border, rgba(0, 0, 0, 0.12));
+  fill: var(--chart-point-label-bg, rgba(255, 255, 255, 0.92));
+  stroke: var(--chart-point-label-border, rgba(0, 0, 0, 0.16));
   stroke-width: 1;
-  opacity: 0.92;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28));
 }
 </style>

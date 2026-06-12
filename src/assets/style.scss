@@ -12,12 +12,17 @@
   --input-bg: #ffffff;
   --input-disabled-bg: #f3f7f5;
   --placeholder: #9a9a9a;
+  --border: rgba(0, 0, 0, 0.18);
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --nav-icon:#3aaa7c;
 
   /* chart colors */
   --chart-grid: #b0b0b0; /* main grid lines */
   --chart-grid-half: #d0d0d0; /* 0.5kg dotted lines */
   --chart-axis: rgba(0, 0, 0, 0.2); /* axis lines */
   --chart-point-label: #333; /* weight values on points */
+  --chart-point-label-bg: rgba(255, 255, 255, 0.98);
+  --chart-point-label-border: rgba(0, 0, 0, 0.22);
   --chart-x-label: #666; /* date labels */
   --chart-goal: #ff6b6b; /* goal line */
   --chart-point-bg: #fff; /* data point fill */
@@ -37,12 +42,17 @@
   --input-bg: #252525;
   --input-disabled-bg: #1a1a1a;
   --placeholder: #777777;
+  --border: rgba(255, 255, 255, 0.18);
+  --nav-bg: rgba(0, 0, 0, 0.9);
+  --nav-icon: #70ebb8;
 
   /* chart colors (dark mode) */
   --chart-grid: #444; /* main grid lines */
   --chart-grid-half: #333; /* 0.5kg dotted lines */
   --chart-axis: rgba(255, 255, 255, 0.2); /* axis lines */
   --chart-point-label: #ccc; /* weight values on points */
+  --chart-point-label-bg: #3f3f3f;
+  --chart-point-label-border: rgba(255, 255, 255, 0.28);
   --chart-x-label: #999; /* date labels */
   --chart-goal: #ff6b6b; /* goal line */
   --chart-point-bg: #1e1e1e; /* data point fill */
@@ -72,16 +82,16 @@ body,
 }
 body {
   font-family:
-    "Noto Sans JP",
     -apple-system,
     BlinkMacSystemFont,
-    "Hiragino Sans",
-    "Hiragino Kaku Gothic ProN",
-    "Yu Gothic",
     "Segoe UI",
     Roboto,
     "Helvetica Neue",
     Arial,
+    "Noto Sans JP",
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
     sans-serif;
   margin: 0;
   color: var(--text);
@@ -130,7 +140,8 @@ body {
   gap: 12px;
   z-index: 20;
   backdrop-filter: blur(10px); /* 背景を10pxぼかす */
-  background-color: rgba(255, 255, 255, 0.9); /* 要素の色 */
+  background-color: var(--nav-bg); /* 半透明の背景色 */
+  border: 1px solid var(--border);
 }
 .bottom-nav button {
   width: 44px;
@@ -141,13 +152,13 @@ body {
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  opacity: 0.78;
-  color: rgba(18, 18, 18, 0.72);
+  opacity: 1;
+  color: #999;
   cursor: pointer;
 }
 .bottom-nav button.active {
   opacity: 1;
-  color: #121212;
+  color: var(--nav-icon);
 }
 .bottom-nav button:disabled {
   cursor: default;
@@ -274,7 +285,7 @@ body {
   grid-template-columns: 1fr;
   gap: 4px;
   padding-left: 12px;
-  border-left: 1px solid #e6efe9;
+  border-left: 1px solid var(--border);
 }
 .metric .label {
   font-size: 12px;
@@ -468,7 +479,7 @@ select:disabled {
   background: var(--soft-surface-hover);
 }
 .btn-text:disabled {
-  opacity: 0.45;
+  opacity: 0.3;
   cursor: default;
 }
 .btn-text.compact {
@@ -546,6 +557,7 @@ select:disabled {
   margin: 4px 0 12px;
   border-radius: 12px;
   background: var(--soft-surface);
+  border: 1px solid var(--border);
 }
 .range-tabs button {
   min-width: 0;
