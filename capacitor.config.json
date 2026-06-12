@@ -8,6 +8,9 @@
       "launchAutoHide": false,
       "backgroundColor": "#70ebb8",
       "showSpinner": false
+    },
+    "LocalNotifications": {
+      "presentationOptions": ["alert", "sound", "badge"]
     }
   }
 }

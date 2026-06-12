@@ -19,7 +19,7 @@
             <div class="label">{{ settings.privateMode ? '初日から' : 'NOW!!' }}</div>
             <div class="value">
               {{ settings.privateMode ? firstDayDiffText : formatWeight(latest.weight) }}
-              <span v-if="!settings.privateMode">kg</span>
+              <span>kg</span>
             </div>
             <div v-if="settings.privateMode" class="hint">体重は非公開です</div>
           </div>
@@ -236,43 +236,50 @@
           </div>
           <div class="note-text" v-if="notificationHelpText">{{ notificationHelpText }}</div>
 
-          <div class="settings-section backup-box">
-            <div class="settings-section-copy">
-              <div class="backup-title">BACKUP</div>
-              <div class="note-text">記録と設定をJSONで保存・復元できます。</div>
-            </div>
-            <div class="backup-actions">
-              <button class="btn-text compact" type="button" @click="exportBackup">EXPORT</button>
-              <button class="btn-text compact" type="button" @click="openImportFile">IMPORT</button>
-            </div>
-            <input
-              ref="importFileInput"
-              class="visually-hidden"
-              type="file"
-              accept="application/json,.json"
-              @change="importBackup"
-            />
-          </div>
+          <button class="more-settings-toggle" type="button" @click="showMoreSettings = !showMoreSettings">
+            <span class="more-settings-icon" :style="{ '--icon': `url(${iconSetting})` }" aria-hidden="true"></span>
+            <span>MORE OPTIONS</span>
+          </button>
 
-          <div class="settings-section privacy-box">
-            <div class="settings-section-copy">
-              <div class="privacy-title">PRIVACY</div>
-              <div class="note-text">記録は端末内に保存され、外部サーバーへ送信されません。</div>
+          <div v-if="showMoreSettings" class="more-settings-panel">
+            <div class="settings-section backup-box">
+              <div class="settings-section-copy">
+                <div class="backup-title">BACKUP</div>
+                <div class="note-text">記録と設定をJSONで保存・復元できます。</div>
+              </div>
+              <div class="backup-actions">
+                <button class="btn-text compact" type="button" @click="exportBackup">EXPORT</button>
+                <button class="btn-text compact" type="button" @click="openImportFile">IMPORT</button>
+              </div>
+              <input
+                ref="importFileInput"
+                class="visually-hidden"
+                type="file"
+                accept="application/json,.json"
+                @change="importBackup"
+              />
             </div>
-            <a class="btn-text compact privacy-link" href="/privacy.html" target="_blank" rel="noopener">POLICY</a>
-          </div>
 
-          <div class="settings-section data-management">
-            <button class="data-management-toggle" type="button" @click="showDataManagement = !showDataManagement">
-              <span>
-                <span class="data-management-title">DATA MANAGEMENT</span>
-                <span class="data-management-note">リセットやログ削除など</span>
-              </span>
-              <span class="data-management-state">{{ showDataManagement ? 'CLOSE' : 'OPEN' }}</span>
-            </button>
-            <div v-if="showDataManagement" class="danger-actions">
-              <button class="btn-danger" type="button" @click="resetSettings">リセット</button>
-              <button class="btn-danger" type="button" @click="clearAllRecords">ログをクリア</button>
+            <div class="settings-section privacy-box">
+              <div class="settings-section-copy">
+                <div class="privacy-title">PRIVACY</div>
+                <div class="note-text">記録は端末内に保存され、外部サーバーへ送信されません。</div>
+              </div>
+              <a class="btn-text compact privacy-link" href="/privacy.html" target="_blank" rel="noopener">POLICY</a>
+            </div>
+
+            <div class="settings-section data-management">
+              <button class="data-management-toggle" type="button" @click="showDataManagement = !showDataManagement">
+                <span>
+                  <span class="data-management-title">DATA MANAGEMENT</span>
+                  <span class="data-management-note">リセットやログ削除など</span>
+                </span>
+                <span class="data-management-state">{{ showDataManagement ? 'CLOSE' : 'OPEN' }}</span>
+              </button>
+              <div v-if="showDataManagement" class="danger-actions">
+                <button class="btn-danger" type="button" @click="resetSettings">リセット</button>
+                <button class="btn-danger" type="button" @click="clearAllRecords">ログをクリア</button>
+              </div>
             </div>
           </div>
 
@@ -366,6 +373,8 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { Capacitor } from '@capacitor/core'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
 import logo from './assets/img/logo.svg'
@@ -398,12 +407,15 @@ const selectedTrendRange = ref('1m')
 const selectedHistoryMonth = ref('')
 const showDateInput = ref(false)
 const showOptionalFields = ref(false)
+const showMoreSettings = ref(false)
 const showDataManagement = ref(false)
 const lastSavedDate = ref(null)
 const editingRecord = ref(null)
 const deferredInstallPrompt = ref(null)
 const appInstalled = ref(false)
 const importFileInput = ref(null)
+const isNativeApp = Capacitor.isNativePlatform()
+const reminderNotificationId = 1001
 
 let notificationTimer = null
 let toastTimer = null
@@ -477,6 +489,13 @@ function clearNotificationTimer() {
   }
 }
 
+async function cancelNativeNotification() {
+  if (!isNativeApp) return
+  await LocalNotifications.cancel({
+    notifications: [{ id: reminderNotificationId }]
+  }).catch(() => {})
+}
+
 function getNextNotificationDelay() {
   if (!settings.value.time) return null
   const [hours, minutes] = settings.value.time.split(':').map(Number)
@@ -511,7 +530,37 @@ function showReminderNotification() {
   }
 }
 
-function scheduleNotification() {
+function mapNativeNotificationPermission(permission) {
+  if (permission === 'granted') return 'granted'
+  if (permission === 'denied') return 'denied'
+  if (permission === 'prompt' || permission === 'prompt-with-rationale') return 'default'
+  return 'unsupported'
+}
+
+async function scheduleNativeNotification() {
+  clearNotificationTimer()
+  await cancelNativeNotification()
+
+  if (!settings.value.time || notificationPermission.value !== 'granted') return
+  const [hour, minute] = settings.value.time.split(':').map(Number)
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return
+
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: reminderNotificationId,
+        title: 'LOGS',
+        body: `今日は ${settings.value.time} に記録を忘れずに！`,
+        schedule: {
+          on: { hour, minute },
+          repeats: true
+        }
+      }
+    ]
+  }).catch(() => {})
+}
+
+function scheduleWebNotification() {
   clearNotificationTimer()
   if (!('Notification' in window) || !settings.value.time || Notification.permission !== 'granted') return
   const delay = getNextNotificationDelay()
@@ -523,7 +572,26 @@ function scheduleNotification() {
   }, delay)
 }
 
-function requestNotificationPermission() {
+function scheduleNotification() {
+  if (isNativeApp) {
+    scheduleNativeNotification()
+    return
+  }
+  scheduleWebNotification()
+}
+
+async function requestNotificationPermission() {
+  if (isNativeApp) {
+    const result = await LocalNotifications.requestPermissions().catch(() => ({ display: 'denied' }))
+    notificationPermission.value = mapNativeNotificationPermission(result.display)
+    if (notificationPermission.value === 'granted') {
+      await scheduleNativeNotification()
+    } else {
+      await cancelNativeNotification()
+    }
+    return
+  }
+
   if (!('Notification' in window)) {
     notificationPermission.value = 'unsupported'
     return
@@ -546,7 +614,12 @@ function requestNotificationPermission() {
   }
 }
 
-function syncNotificationPermission() {
+async function syncNotificationPermission() {
+  if (isNativeApp) {
+    const result = await LocalNotifications.checkPermissions().catch(() => ({ display: 'denied' }))
+    notificationPermission.value = mapNativeNotificationPermission(result.display)
+    return
+  }
   notificationPermission.value = 'Notification' in window ? Notification.permission : 'unsupported'
 }
 
@@ -591,6 +664,7 @@ async function resetSettings() {
   settingsError.value = ''
   settingsSaved.value = true
   applyDarkMode()
+  scheduleNotification()
   setTimeout(() => (settingsSaved.value = false), 1500)
   showToast('設定をリセットしました')
 }
@@ -898,14 +972,14 @@ async function installPWA() {
   deferredInstallPrompt.value = null
 }
 
-onMounted(() => {
+onMounted(async () => {
   // load settings and records from storage utils
   Object.assign(settings.value, loadSettingsFromLS())
   loadRecords()
   // initialize form date to today
   form.value.date = getTodayDateString()
   applyDarkMode()
-  syncNotificationPermission()
+  await syncNotificationPermission()
   if (notificationPermission.value === 'granted') {
     scheduleNotification()
   }
@@ -928,6 +1002,7 @@ watch(
       scheduleNotification()
     } else {
       clearNotificationTimer()
+      cancelNativeNotification()
     }
   }
 )
@@ -1067,7 +1142,7 @@ const firstDayDiffText = computed(() => {
   if (!latest.value || !firstRecord.value) return '—'
   const diff = (latest.value.weight - firstRecord.value.weight).toFixed(1)
   const sign = diff > 0 ? '+' : ''
-  return `${sign}${diff}kg`
+  return `${sign}${diff}`
 })
 
 const bmi = computed(() => {
