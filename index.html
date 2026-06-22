@@ -2,18 +2,215 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>LOGS</title>
-    <meta name="theme-color" content="#6fc2a6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LOGS | 体重だけは記録しよう。</title>
+    <meta name="description" content="LOGSは、体重をすぐに記録できるシンプルな体重ログアプリです。広告なし、アカウントなし、ローカル保存を基本方針にしています。" />
+    <meta name="theme-color" content="#70ebb8" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png" />
+    <script>
+      if (location.protocol === 'capacitor:') {
+        location.replace('./app.html')
+      }
+    </script>
+    <style>
+      :root {
+        color: #121212;
+        background: #70ebb8;
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #70ebb8;
+      }
+
+      main {
+        width: min(100%, 960px);
+        margin: 0 auto;
+        padding: 64px 24px 40px;
+      }
+
+      header {
+        min-height: calc(100vh - 120px);
+        display: grid;
+        align-content: center;
+        gap: 28px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(48px, 12vw, 120px);
+        line-height: 0.9;
+        letter-spacing: 0;
+      }
+
+      h1 img {
+        display: block;
+        width: min(280px, 48vw);
+        height: auto;
+      }
+
+      .lead {
+        margin: 0;
+        font-size: clamp(26px, 5vw, 52px);
+        line-height: 1.25;
+        font-weight: 800;
+      }
+
+      .intro {
+        max-width: 640px;
+        margin: 0;
+        color: rgba(18, 18, 18, 0.82);
+        font-size: 17px;
+        line-height: 1.9;
+        font-weight: 600;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .button {
+        min-height: 48px;
+        padding: 0 22px;
+        border-radius: 999px;
+        border: 2px solid #121212;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #121212;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .button.primary {
+        background: #121212;
+        color: #70ebb8;
+      }
+
+      .button.disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+
+      .section {
+        margin-top: 24px;
+        padding: 28px;
+        border-radius: 20px;
+        background: #1e1e1e;
+        color: #f5f5f5;
+      }
+
+      .section h2 {
+        margin: 0 0 18px;
+        font-size: 20px;
+        line-height: 1.3;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .features li {
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .links a {
+        color: #121212;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      footer {
+        padding: 28px 0 0;
+        color: rgba(18, 18, 18, 0.62);
+        font-size: 13px;
+      }
+
+      @media (max-width: 640px) {
+        main {
+          padding: 44px 18px 32px;
+        }
+
+        header {
+          min-height: auto;
+          padding: 18px 0 28px;
+        }
+
+
+        .features {
+          grid-template-columns: 1fr;
+        }
+
+        .section {
+          border-radius: 18px;
+          padding: 22px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <main>
+      <header>
+        <div class="brand">
+          <h1><img src="/assets/img/logo.svg" alt="LOGS"></h1>
+        </div>
+        <p class="lead">体重だけは記録しよう。</p>
+        <p class="intro">
+          LOGSは、体重をすぐに記録できるシンプルな体重ログアプリです。
+          広告なし、アカウントなし、ローカル保存を基本方針にしています。
+        </p>
+        <div class="actions">
+          <span class="button primary disabled" aria-disabled="true">App Store Coming Soon</span>
+        </div>
+      </header>
+
+      <section class="section" aria-labelledby="features-title">
+        <h2 id="features-title">LOGSでできること</h2>
+        <ul class="features">
+          <li>体重、体脂肪率、メモを記録できます。</li>
+          <li>グラフや履歴で日々の変化を確認できます。</li>
+          <li>データは端末内に保存され、外部サーバーへ送信されません。</li>
+          <li>広告なし、アカウントなしで、すぐに使い始められます。</li>
+        </ul>
+      </section>
+
+      <nav class="links" aria-label="関連リンク">
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/support.html">Support</a>
+      </nav>
+
+      <footer>
+        <small>&copy; 2026 LOGS</small>
+      </footer>
+    </main>
   </body>
 </html>

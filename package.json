@@ -13,8 +13,11 @@
     "test": "vitest --run"
   },
   "dependencies": {
+    "@capacitor/browser": "^7.0.5",
     "@capacitor/core": "^7.6.6",
+    "@capacitor/filesystem": "^7.1.8",
     "@capacitor/local-notifications": "^7.0.2",
+    "@capacitor/share": "^7.0.4",
     "@capacitor/splash-screen": "^7.0.2",
     "@fontsource/noto-sans-jp": "^5.2.9",
     "vue": "^3.3.4"

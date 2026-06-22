@@ -2,6 +2,13 @@
 <template>
   <div class="weight-chart">
     <svg viewBox="0 0 600 340" preserveAspectRatio="xMidYMid meet" class="chart-svg" role="img" aria-label="体重推移グラフ">
+      <defs>
+        <linearGradient id="weight-chart-area-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--primary, #70EBB8)" stop-opacity="0.34" />
+          <stop offset="100%" stop-color="var(--primary, #70EBB8)" stop-opacity="0.02" />
+        </linearGradient>
+      </defs>
+
       <!-- horizontal grid (coarse) -->
       <g class="grid" stroke="var(--chart-grid, #b0b0b0)" stroke-width="1" stroke-opacity="0.7">
         <line v-for="(y, i) in gridYs" :key="'g'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="y" :y2="y" />
@@ -24,6 +31,9 @@
       <g class="half-grid" stroke="var(--chart-grid-half, #d0d0d0)" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.8">
         <line v-for="(ln, i) in halfKgLines" :key="'h'+i" :x1="scale.P" :x2="scale.W - scale.P" :y1="ln.y" :y2="ln.y" />
       </g>
+
+      <!-- area fill -->
+      <path v-if="areaPath" :d="areaPath" fill="url(#weight-chart-area-gradient)" class="chart-area" />
 
       <!-- polyline -->
       <polyline :points="polylinePoints" fill="none" stroke="var(--primary, #70EBB8)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
@@ -112,6 +122,17 @@ const points = computed(() => {
 })
 
 const polylinePoints = computed(() => points.value.map(p => `${p.x},${p.y}`).join(' '))
+
+const areaPath = computed(() => {
+  const list = points.value
+  const s = scale.value
+  if (!list.length || !s) return ''
+  const bottomY = s.H - s.P
+  const line = list.map((p, index) => `${index === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+  const first = list[0]
+  const last = list[list.length - 1]
+  return `${line} L ${last.x} ${bottomY} L ${first.x} ${bottomY} Z`
+})
 
 const visiblePointMarkers = computed(() => {
   const list = points.value

@@ -62,7 +62,7 @@
 
           <label v-if="showDateInput">
             日付
-            <input type="date" v-model="form.date" />
+            <input type="date" v-model="form.date" :max="todayDate" />
           </label>
 
           <label>
@@ -98,7 +98,7 @@
           <h2 class="card-title">ADD TO HOME</h2>
           <p>すぐ記録できるように、アプリとして追加できます。</p>
         </div>
-        <button class="btn-icon lg" type="button" @click="installPWA"><img src="/icons/icon-192.png" alt="追加"></button>
+        <button class="btn-icon lg" type="button" @click="installPWA"><img src="/assets/icons/icon-192.png" alt="追加"></button>
       </section>
 
       <section v-if="activeView === 'trend'" class="card graph-card">
@@ -108,7 +108,10 @@
             <button
               v-for="range in trendRanges"
               :key="range.key"
-              :class="{ active: activeTrendRangeKey === range.key }"
+              :class="{
+                active: activeTrendRangeKey === range.key,
+                unavailable: !isTrendRangeAvailable(range)
+              }"
               type="button"
               :disabled="activeTrendRangeKey === range.key || !isTrendRangeAvailable(range)"
               @click="selectTrendRange(range)"
@@ -245,7 +248,7 @@
             <div class="settings-section backup-box">
               <div class="settings-section-copy">
                 <div class="backup-title">BACKUP</div>
-                <div class="note-text">記録と設定をJSONで保存・復元できます。</div>
+                <div class="note-text">記録と設定をJSONで保存・復元できます。iPhoneでは共有画面から保存先を選べます。</div>
               </div>
               <div class="backup-actions">
                 <button class="btn-text compact" type="button" @click="exportBackup">EXPORT</button>
@@ -265,7 +268,7 @@
                 <div class="privacy-title">PRIVACY</div>
                 <div class="note-text">記録は端末内に保存され、外部サーバーへ送信されません。</div>
               </div>
-              <a class="btn-text compact privacy-link" href="/privacy.html" target="_blank" rel="noopener">POLICY</a>
+              <button class="btn-text compact privacy-link" type="button" @click="openPrivacyPolicy">POLICY</button>
             </div>
 
             <div class="settings-section data-management">
@@ -374,7 +377,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { Capacitor } from '@capacitor/core'
+import { Browser } from '@capacitor/browser'
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { LocalNotifications } from '@capacitor/local-notifications'
+import { Share } from '@capacitor/share'
 import { formatWeight as hwFormatWeight, computeBMI } from './utils/helpers'
 import { loadSettingsFromLS, saveSettingsToLS, loadRecordsFromLS, saveRecordsToLS, clearRecordsFromLS, addOrReplaceRecord } from './utils/storage'
 import logo from './assets/img/logo.svg'
@@ -416,6 +422,7 @@ const appInstalled = ref(false)
 const importFileInput = ref(null)
 const isNativeApp = Capacitor.isNativePlatform()
 const reminderNotificationId = 1001
+const privacyPolicyUrl = 'https://logs.ga-works.com/privacy.html'
 
 let notificationTimer = null
 let toastTimer = null
@@ -521,12 +528,12 @@ function showReminderNotification() {
     navigator.serviceWorker.ready.then(registration => {
       registration.showNotification(title, {
         body,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png'
+        icon: '/assets/icons/icon-192.png',
+        badge: '/assets/icons/icon-192.png'
       })
     })
   } else if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body, icon: '/icons/icon-192.png' })
+    new Notification(title, { body, icon: '/assets/icons/icon-192.png' })
   }
 }
 
@@ -719,7 +726,7 @@ async function clearAllRecords() {
   clearRecordsFromLS()
 }
 
-function exportBackup() {
+async function exportBackup() {
   settingsError.value = ''
   const payload = {
     app: 'LOGS',
@@ -728,11 +735,35 @@ function exportBackup() {
     settings: settings.value,
     records: records.value
   }
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const filename = `logs-backup-${getTodayDateString()}.json`
+  const backupJson = JSON.stringify(payload, null, 2)
+
+  if (isNativeApp) {
+    try {
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: backupJson,
+        directory: Directory.Data,
+        encoding: Encoding.UTF8
+      })
+      await Share.share({
+        title: 'LOGS Backup',
+        text: 'LOGSのバックアップファイルです。',
+        files: [result.uri],
+        dialogTitle: 'バックアップの保存先を選択'
+      })
+      showToast('共有画面を開きました')
+    } catch (e) {
+      settingsError.value = 'バックアップのエクスポートに失敗しました。'
+    }
+    return
+  }
+
+  const blob = new Blob([backupJson], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `logs-backup-${getTodayDateString()}.json`
+  link.download = filename
   document.body.appendChild(link)
   link.click()
   link.remove()
@@ -846,6 +877,11 @@ function saveRecord() {
   error.value = ''
   if (!form.value.date) {
     error.value = '日付は必須です。'
+    return
+  }
+  if (form.value.date > todayDate.value) {
+    error.value = '未来の日付は記録できません。'
+    form.value.date = todayDate.value
     return
   }
   if (!form.value.weight || form.value.weight < 1) {
@@ -970,6 +1006,15 @@ async function installPWA() {
   deferredInstallPrompt.value.prompt()
   await deferredInstallPrompt.value.userChoice
   deferredInstallPrompt.value = null
+}
+
+async function openPrivacyPolicy() {
+  if (isNativeApp) {
+    await Browser.open({ url: privacyPolicyUrl }).catch(() => {})
+    return
+  }
+
+  window.open(privacyPolicyUrl, '_blank', 'noopener')
 }
 
 onMounted(async () => {

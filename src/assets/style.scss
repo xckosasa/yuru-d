@@ -576,12 +576,21 @@ select:disabled {
   font-weight: 800;
   cursor: pointer;
 }
+.range-tabs button.unavailable {
+  color: rgba(150, 150, 150, 0.72);
+  background: rgba(128, 128, 128, 0.14);
+  opacity: 0.45;
+}
 .range-tabs button.active {
   background: var(--primary);
   color: #121212;
+  opacity: 1;
 }
 .range-tabs button:disabled {
   cursor: default;
+}
+.range-tabs button.unavailable:disabled {
+  border: 1px dashed rgba(150, 150, 150, 0.4);
 }
 .trend-summary {
   display: grid;

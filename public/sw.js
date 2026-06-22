@@ -27,7 +27,7 @@ self.addEventListener('notificationclick', event => {
         }
       }
       if (self.clients.openWindow) {
-        return self.clients.openWindow(self.registration.scope)
+        return self.clients.openWindow(`${self.registration.scope}app.html`)
       }
     })
   );
